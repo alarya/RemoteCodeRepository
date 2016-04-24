@@ -137,15 +137,16 @@ int main()
 			{				
 				break;
 			}
-
-			std::string FromAddr = "l27.0.0.1:8081";
+			
 			Attribute commandAttrib;
 			commandAttrib.first = "Command"; commandAttrib.second = command;
 			httpMessage.addAttribute(commandAttrib);
 			Attribute fromAddrAttrib;
 			fromAddrAttrib.first = "FromAddr"; fromAddrAttrib.second = "127.0.0.1:8081";
 			httpMessage.addAttribute(fromAddrAttrib);
-
+			Body body;
+			body.push_back("someBody");
+			httpMessage.setBody(body);
 			si.sendString(httpMessage.buildMessage());
 		}
 

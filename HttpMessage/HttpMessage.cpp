@@ -119,36 +119,36 @@ void HttpMessage::parseMessage(const Message& msg)
 	std::string line;
 	
 	size_t counter = 0;
-	while (true)
+	std::string first;
+	std::string second;
+	//scan attributes
+	while(true)
 	{
-		if(msg[counter] == '\n')
-			if (msg[counter + 1] == '\n')
+
+		if (msg[counter] == '\n')
+		{
+			first = "";
+			second = "";
+			size_t i = 0;
+			while (line[i] != ':')
 			{
-				//end of attributes
-				break;
-			}
-			else
-			{
-				//add attribute
-				std::string first;
-				std::string second;
-				size_t i = 0;
-				while (line[i] != ':')
-				{
-					first += line[i];
-					i++;
-				}
+				first += line[i];
 				i++;
-				while (i < line.size() )
-				{
-					second += line[i];
-					i++;
-				}
-				Attribute attr;
-				attr.first = first; attr.second = second;
-				addAttribute(attr);
-				line = "";
 			}
+			i++;
+			while (i < line.size())
+			{
+				second += line[i];
+				i++;
+			}
+			Attribute attr;
+			attr.first = first; attr.second = second;
+			addAttribute(attr);
+			line = "";
+
+			if (msg[counter + 1] == '\n')  //it was last attribute
+				break;
+		}
 		else
 		{
 			line += msg[counter];

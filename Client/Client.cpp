@@ -52,6 +52,8 @@ void ClientHandler::operator()(Socket& socket_)
 	}
 }
 
+
+
 //////////////////////////////////////////////////////////////////////
 // Send Messages class (Reply to requests)
 // Runs on a seperate thread
@@ -96,7 +98,7 @@ void Sender::operator()(BlockingQueue<std::string>& sendQ,SocketConnecter& si)
 
 
 
-#ifdef TEST_CLIENT
+//--------------Client main thread-----------------------------//
 
 using byte = std::string;
 using Name = std::string;
@@ -155,16 +157,13 @@ int main()
 			httpMessage.addAttribute(fromAddrAttrib);
 
 			Body body;						
-			body.push_back("someBody");				
-			
-			httpMessage.setBody(body);
+			httpMessage.setBody("someBody");
 
 			sendQ.enQ(httpMessage.buildMessage());
-
-			//si.sendString(httpMessage.buildMessage());
+			
 		}
 
-		si.shutDownSend();
+		si.shutDownSend(); //quit command sent as input
 	}
 	catch (std::exception& exc)
 	{
@@ -173,5 +172,3 @@ int main()
 		Show::write(exMsg);
 	}
 }
-
-#endif

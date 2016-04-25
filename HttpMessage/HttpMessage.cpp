@@ -13,7 +13,7 @@
 //
 /////////////////////////////////////////////
 
-using byte = std::string;
+using byte = char;
 using Name = std::string;
 using Value = std::string;
 using Attribute = std::pair<Name, Value>;
@@ -57,11 +57,11 @@ Attributes HttpMessage::attributes()
 }
 
 //--------set Body of the message ----------------//
-void HttpMessage::setBody(byte buffer[], size_t bufLen)
+void HttpMessage::setBody(std::string msg)
 {
-	for (size_t i = 0; i < bufLen; i++)
+	for (auto byte : msg)
 	{
-		body_.push_back(buffer[i]);
+		body_.push_back(byte);
 	}
 }
 
@@ -86,7 +86,7 @@ size_t HttpMessage::bodyLength()
 	size_t len = 0;
 	for (auto byte : body_)
 	{
-		len += byte.length();
+		len += 1;
 	}
 	return len;
 }
@@ -94,6 +94,14 @@ size_t HttpMessage::bodyLength()
 //------builds and returns the message ----------//
 Message HttpMessage::buildMessage()
 {
+	//set content-length attribute
+	Attribute attrib;
+	attrib.first = "content_length";
+	std::stringstream size;
+	size << bodyLength();
+	attrib.second = size.str();
+	addAttribute(attrib);
+
 	Message msg;
 	for (auto attribute : attributes_)
 	{
@@ -159,24 +167,10 @@ void HttpMessage::parseMessage(const Message& msg)
 	counter++;
 	//body starts
 	Body body;
-	byte byte_;
-	while (counter < msg.size() )
+	while (counter < msg.size())
 	{
-		if (msg[counter] == ' ')
-		{
-			body.push_back(byte_);
-			byte_ = "";
-		}
-		else
-		{
-			byte_ += msg[counter];
-		}
-
-		counter++;
+		body.push_back(msg[counter++]);
 	}
-	if (byte_.size() != 0)
-		body.push_back(byte_);
-
 	setBody(body);
 }
 
@@ -209,17 +203,8 @@ int main()
 	httpMessage.addAttribute(attrib3);
 	std::cout << "\nAdded attribute - " << attrib3.first << ":" << attrib3.second << "\n";
 
-	Body msg;
-	msg.push_back("This"); msg.push_back("is"); msg.push_back("a"); msg.push_back("messsage");
+	std::string msg = "This is a message";
 	httpMessage.setBody(msg);
-
-	Attribute attrib4;
-	attrib4.first = "content_length";
-	std::stringstream size;
-	size << httpMessage.bodyLength();
-	attrib4.second = size.str() ;
-	httpMessage.addAttribute(attrib4);
-	std::cout << "\nAdded attribute - " << attrib4.first << ":" << attrib4.second << "\n";
 
 	Message builtMessage = httpMessage.buildMessage();
 	std::cout << "\nThe built Message\n";

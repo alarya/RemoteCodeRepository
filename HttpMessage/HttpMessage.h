@@ -25,7 +25,7 @@ public:
 	HttpMessage();
 	~HttpMessage();
 
-	using byte = std::string;
+	using byte = char;
 	using Name = std::string;
 	using Value = std::string;
 	using Attribute = std::pair<Name, Value>;
@@ -39,7 +39,7 @@ public:
 	Attributes attributes();
 
 	//message body
-	void setBody(byte buffer[], size_t bufLen);
+	void setBody(std::string msg);
 	void HttpMessage::setBody(Body& body);
 	Body body();
 	size_t bodyLength();

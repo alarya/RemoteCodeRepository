@@ -145,9 +145,7 @@ void Sender::operator()(BlockingQueue<std::string>& sendQ)
 
 
 
-//----< test stub >--------------------------------------------------
-#ifdef TEST_SERVER
-
+//----< Server main thread >--------------------------------------------------
 int main()
 {
 	Show::attach(&std::cout);
@@ -190,5 +188,3 @@ int main()
 		Show::write(exMsg);
 	}
 }
-
-#endif

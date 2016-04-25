@@ -31,7 +31,7 @@ using Show = StaticLogger<1>;
 
 
 /////////////////////////////////////////////////////////////////////
-// Client handler
+// Client handler (Runs on a new thread for every client)
 //
 
 class ClientHandler
@@ -64,6 +64,22 @@ void ClientHandler::operator()(Socket& socket_)
 		else if (command == "Check-In")
 		{
 			std::cout << "\nCheck-In File....\n";
+			//making up shit for time being
+			std::string fileName = "package1.cpp";   //client message should provide this in prev message
+			int fileLength = 200;					 //client message should provide this in prev message
+			const size_t bufferLen = 2000;            
+			char buffer[bufferLen];
+			bool ok = socket_.recv(fileLength, buffer);
+			if (socket_ == INVALID_SOCKET)
+				break;
+			if (ok)
+			{
+				buffer[fileLength] = '\0';
+				std::string fileData(buffer);
+				std::cout << "Client uploaded file \ndata :- \n";
+				std::cout << fileData;
+				std::cout << "\nSize: " << fileData.size();
+			}
 			continue;
 		}
 		else if (command == "Check-Out")
@@ -86,6 +102,20 @@ void ClientHandler::operator()(Socket& socket_)
 	std::cout << "\nClosing connection with client\n";
 	socket_.shutDown();
 	socket_.close();
+}
+
+//////////////////////////////////////////////////////////////////////
+// Send Messages class (Reply to requests)
+//
+class Sender
+{
+public:
+	void operator()(BlockingQueue<std::string>& sendQ);
+};
+
+void Sender::operator()(BlockingQueue<std::string>& sendQ)
+{
+
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -145,14 +175,32 @@ int main()
 	Show::start();	
 	try
 	{
+		//---------Queues for communication --------------------//
+		BlockingQueue<std::string> recvQ;
+		BlockingQueue<std::string> sendQ;
+
+		//---------Start server listener------------------------//
 		SocketSystem ss;
 		SocketListener sl(8080, Socket::IP6);
 		ClientHandler cp;
 		sl.start(cp);
 
 		std::cout << "\n\nServer started at 8080............\n\n";
-
 		std::cout << "Press any Key to break";
+
+		//-------start thread to send reply messages from sendQ--//
+		//Sender sender;
+		//std::thread sendThread(sender,std::ref(sendQ));
+		//sendThread.detach();
+
+		//Main thread blocks on recvQ 
+		//while (true)
+		//{
+		//	std::string response= recvQ.deQ();
+
+
+		//}
+
 		std::cout.flush();
 		std::cin.get();
 	}

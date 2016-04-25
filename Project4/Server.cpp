@@ -22,7 +22,6 @@
 #include "../Sockets/Sockets.h"
 #include "../Logger/Logger.h"
 #include "../Utilities/Utilities.h"
-#include "../HttpMessage/IService.h"
 #include "../HttpMessage/HttpMessage.h"
 #include <string>
 #include <iostream>
@@ -38,6 +37,10 @@ class ClientHandler
 {
 public:
 	void operator()(Socket& socket_);
+private:
+	void handleGetFiles(Socket& socket_);
+	bool handleCheckIn(Socket& socket_);
+	void handleCheckOut(Socket& socket_);
 };
 
 void ClientHandler::operator()(Socket& socket_)
@@ -54,37 +57,21 @@ void ClientHandler::operator()(Socket& socket_)
 		std::string command = httpMessage.findValue("Command");
 		std::string client = httpMessage.findValue("FromAddr");
 		std::cout << "\nRequest: " << command << "  Client: " << client << "\n";
-
 		
 		if (command == "GetFiles")
 		{
-			std::cout << "\nSending Files....\n";
+			handleGetFiles(socket_);			
 			continue;
 		}
 		else if (command == "Check-In")
 		{
-			std::cout << "\nCheck-In File....\n";
-			//making up shit for time being
-			std::string fileName = "package1.cpp";   //client message should provide this in prev message
-			int fileLength = 200;					 //client message should provide this in prev message
-			const size_t bufferLen = 2000;            
-			char buffer[bufferLen];
-			bool ok = socket_.recv(fileLength, buffer);
-			if (socket_ == INVALID_SOCKET)
+			if (!handleCheckIn(socket_))
 				break;
-			if (ok)
-			{
-				buffer[fileLength] = '\0';
-				std::string fileData(buffer);
-				std::cout << "Client uploaded file \ndata :- \n";
-				std::cout << fileData;
-				std::cout << "\nSize: " << fileData.size();
-			}
 			continue;
 		}
 		else if (command == "Check-Out")
 		{
-			std::cout << "\nCheck-Out File....\n";
+			handleCheckOut(socket_);
 			continue;
 		}
 		else if (command == "quit")
@@ -104,6 +91,44 @@ void ClientHandler::operator()(Socket& socket_)
 	socket_.close();
 }
 
+//------------Handle get files request------------//
+void ClientHandler::handleGetFiles(Socket& socket_)
+{
+	std::cout << "\nSending Files....\n";
+}
+
+//-----------Handle CheckIn requests ------------//
+bool ClientHandler::handleCheckIn(Socket& socket_)
+{
+	std::cout << "\nCheck-In File....\n";
+	//making up shit for time being
+	std::string fileName = "package1.cpp";   //client message should provide this in prev message
+	int fileLength = 200;					 //client message should provide this in prev message
+	const size_t bufferLen = 2000;
+	char buffer[bufferLen];
+	bool ok = socket_.recv(fileLength, buffer);
+	if (socket_ == INVALID_SOCKET)
+		return false;
+	if (ok)
+	{
+		buffer[fileLength] = '\0';
+		std::string fileData(buffer);
+		std::cout << "Client uploaded file \ndata :- \n";
+		std::cout << fileData;
+		std::cout << "\nSize: " << fileData.size();
+	}
+	return true;
+}
+
+//-------Handle CheckOut requests----------------//
+void ClientHandler::handleCheckOut(Socket& socket_)
+{
+	std::cout << "\nCheck-Out File....\n";
+}
+
+
+
+
 //////////////////////////////////////////////////////////////////////
 // Send Messages class (Reply to requests)
 //
@@ -118,52 +143,6 @@ void Sender::operator()(BlockingQueue<std::string>& sendQ)
 
 }
 
-//////////////////////////////////////////////////////////////////////
-// Server
-//
-
-class Server : IService {
-public:
-	static BlockingQueue<std::string> recvQ;
-	static BlockingQueue<std::string> sendQ;
-
-	Server()
-	{
-		SocketSystem ss;
-	}
-
-	void startListener(std::size_t port, ClientHandler ch)
-	{
-		sl =  new SocketListener(port, Socket::IP6);
-		sl->start(ch);
-		std::cout <<"\n Server started listening at port: " << port;		
-	}
-
-	void connect(std::size_t port)
-	{
-		si = new SocketConnecter();
-		while (!si->connect("localhost", port))
-		{
-			Show::write("\n Server waiting to connect");
-			::Sleep(100);
-		}
-
-		std::cout << "\n Connected to Client: " << port << "\n";
-	}
-
-	void PostMessage(std::string msg)
-	{
-		si->sendString(msg);
-	}
-
-	void shutDownSend()
-	{
-		si->shutDownSend();
-	}
-private:
-	SocketListener* sl;
-	SocketConnecter* si;
-};
 
 
 //----< test stub >--------------------------------------------------

@@ -143,7 +143,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="HttpMessage.h" />
-    <ClInclude Include="IService.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HttpMessage.cpp" />

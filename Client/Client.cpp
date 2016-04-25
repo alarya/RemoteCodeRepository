@@ -22,7 +22,6 @@
 #include "../Sockets/Sockets.h"
 #include "../Logger/Logger.h"
 #include "../Utilities/Utilities.h"
-#include "../HttpMessage/IService.h"
 #include "../HttpMessage/HttpMessage.h"
 #include <string>
 #include <iostream>
@@ -55,12 +54,14 @@ void ClientHandler::operator()(Socket& socket_)
 
 //////////////////////////////////////////////////////////////////////
 // Send Messages class (Reply to requests)
+// Runs on a seperate thread
 //
 class Sender
 {
 public:
 	void operator()(BlockingQueue<std::string>& sendQ, SocketConnecter& si);
 };
+
 
 void Sender::operator()(BlockingQueue<std::string>& sendQ,SocketConnecter& si)
 {
@@ -69,6 +70,7 @@ void Sender::operator()(BlockingQueue<std::string>& sendQ,SocketConnecter& si)
 		std::string msg = sendQ.deQ();
 		std::cout << "\nSending message to Server..\n";
 		si.sendString(msg);
+
 
 		//------check if file transfer needed--------
 		HttpMessage httpMessage;
@@ -86,56 +88,11 @@ void Sender::operator()(BlockingQueue<std::string>& sendQ,SocketConnecter& si)
 			si.send(fileLength, buffer);
 		}
 		//------------------------------------------
+
 	}
 }
 
 
-/////////////////////////////////////////////////////////////////////
-// Client Class
-//
-
-class Client : IService {
-public:
-	static BlockingQueue<std::string> recvQ;
-	static BlockingQueue<std::string> sendQ;
-
-	Client()
-	{
-		SocketSystem ss;
-	}
-
-	void startListener(std::size_t port, ClientHandler ch)
-	{
-		sl = new SocketListener(port, Socket::IP6);
-		sl->start(ch);
-		std::cout << "\n Client started listening at port: " << port << "\n";		
-	}
-
-	void connect(std::size_t port)
-	{
-		si = new SocketConnecter();
-		while (!si->connect("localhost", port))
-		{
-			Show::write("\n Client waiting to connect");
-			::Sleep(100);
-		}
-
-		std::cout << "\n Connected to Server: " << port << "\n";
-	}
-
-	void PostMessage(std::string msg)
-	{
-		si->sendString(msg);
-	}
-
-	void shutDownSend()
-	{
-		si->shutDownSend();
-	}
-private:
-	SocketListener* sl;
-	SocketConnecter* si;
-};
 
 
 

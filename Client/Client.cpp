@@ -23,6 +23,7 @@
 #include "../Logger/Logger.h"
 #include "../Utilities/Utilities.h"
 #include "../HttpMessage/HttpMessage.h"
+#include "../Logger/Cpp11-BlockingQueue.h"
 #include <string>
 #include <iostream>
 #include <thread>
@@ -34,13 +35,19 @@ using namespace Utilities;
 /////////////////////////////////////////////////////////////////////
 // Client handler
 //
-
+// Runs a different thread for each response
 class ClientHandler
 {
 public:
 	void operator()(Socket& socket_);
+	BlockingQueue<HttpMessage>& RecvQ();
+private:	
+	static BlockingQueue<HttpMessage> recvQ;      //shared by all client handlers 
 };
 
+BlockingQueue<HttpMessage> ClientHandler::recvQ;
+
+//----------reads incoming messages using Socket listener---------//
 void ClientHandler::operator()(Socket& socket_)
 {
 	while (true)
@@ -49,9 +56,18 @@ void ClientHandler::operator()(Socket& socket_)
 		Show::write("\n  Client recvd message \"" + msg + "\"");
 		if (msg == "quit")
 			break;
+
+		//enque in recvQ
+		HttpMessage httpMessage;
+		httpMessage.parseMessage(msg);
+		recvQ.enQ(httpMessage);
 	}
 }
 
+//--------returns reference to the receive queue-----------------//
+BlockingQueue<HttpMessage>& ClientHandler::RecvQ() {
+	return recvQ;
+}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -61,22 +77,19 @@ void ClientHandler::operator()(Socket& socket_)
 class Sender
 {
 public:
-	void operator()(BlockingQueue<std::string>& sendQ, SocketConnecter& si);
+	void operator()(BlockingQueue<HttpMessage>& sendQ, SocketConnecter& si);
 };
 
-
-void Sender::operator()(BlockingQueue<std::string>& sendQ,SocketConnecter& si)
+void Sender::operator()(BlockingQueue<HttpMessage>& sendQ,SocketConnecter& si)
 {
 	while (true)
 	{
-		std::string msg = sendQ.deQ();
+		HttpMessage httpMessage = sendQ.deQ();
 		std::cout << "\nSending message to Server..\n";
-		si.sendString(msg);
+		si.sendString(httpMessage.buildMessage());
 
 
 		//------check if file transfer needed--------
-		HttpMessage httpMessage;
-		httpMessage.parseMessage(msg);
 		if ( httpMessage.findValue("Command") == "Check-In")
 		{
 			std::cout << "\nSending file to Server..\n";
@@ -98,6 +111,8 @@ void Sender::operator()(BlockingQueue<std::string>& sendQ,SocketConnecter& si)
 
 
 
+
+
 //--------------Client main thread-----------------------------//
 
 using byte = std::string;
@@ -112,17 +127,16 @@ int main()
 {
 	try
 	{
-		//---------Queues for communication --------------------//
-		BlockingQueue<std::string> recvQ;
-		BlockingQueue<std::string> sendQ;
+		//---------sendQ for communication --------------------//		
+		BlockingQueue<HttpMessage> sendQ;
 
+		//-------Initialize socket System library--------------//
 		SocketSystem ss;
 		
-		//-------------start Listener--------//
+		//-------------start Client Listener-------------------//
 		SocketListener sl(8081, Socket::IP6);
 		ClientHandler cp;
 		sl.start(cp);
-
 
 		//-------------Connect to server-----//
 		SocketConnecter si;
@@ -149,17 +163,27 @@ int main()
 			{				
 				break;
 			}
+
 			Attribute commandAttrib;
 			commandAttrib.first = "Command"; commandAttrib.second = command;
 			httpMessage.addAttribute(commandAttrib);
 			Attribute fromAddrAttrib;
 			fromAddrAttrib.first = "FromAddr"; fromAddrAttrib.second = "127.0.0.1:8081";
 			httpMessage.addAttribute(fromAddrAttrib);
+			Attribute ToAddrAttrib;
+			ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
+			httpMessage.addAttribute(ToAddrAttrib);
 
 			Body body;						
 			httpMessage.setBody("someBody");
 
-			sendQ.enQ(httpMessage.buildMessage());
+			//place message to send on the sendQ
+			sendQ.enQ(httpMessage);
+
+
+			//wait for response
+			HttpMessage response = cp.RecvQ().deQ();
+			std::cout << "\nResponse recieved for: Command: " << response.findValue("Command");
 			
 		}
 

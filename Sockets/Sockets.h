@@ -221,6 +221,7 @@ public:
 
 	template<typename CallObj>
 	bool start(CallObj& co);
+
 	void stop();
 private:
 	bool bind();
@@ -250,8 +251,8 @@ bool SocketListener::start(CallObj& co)
 	{
 		return false;
 	}
-	// listen on a dedicated thread so server's main thread won't block
 
+	// listen on a dedicated thread so server's main thread won't block
 	std::thread ListenThread(
 		[&]()
 	{
@@ -284,6 +285,7 @@ bool SocketListener::start(CallObj& co)
 	ListenThread.detach();
 	return true;
 }
+
 
 #endif
 

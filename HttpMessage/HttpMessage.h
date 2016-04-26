@@ -1,6 +1,5 @@
-#pragma once
-
-
+#ifndef HTTPMESSAGE_H
+#define HTTPMESSAGE_H
 
 
 #include <string>
@@ -54,3 +53,5 @@ private:
 	//void printHttpMessage();
 };
 
+
+#endif

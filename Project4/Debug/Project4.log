@@ -1,2 +1,8 @@
 ﻿  Server.cpp
+  Utilities.cpp
+  Sockets.cpp
+  Logger.cpp
+  Cpp11-BlockingQueue.cpp
+  HttpMessage.cpp
+  Generating Code...
   Project4.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\Server.exe

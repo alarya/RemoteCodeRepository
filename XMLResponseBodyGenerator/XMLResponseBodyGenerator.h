@@ -13,6 +13,10 @@ struct Package {
 	string name;
 	string version;
 	string status;
+
+	bool operator<(const Package &p) const {
+		return name < p.name || (name ==p.name &&  version < p.version) ;
+	}
 };
 
 struct CheckInPackage {

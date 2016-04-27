@@ -1,2 +1,8 @@
-﻿  XmlDocument.cpp
+﻿  XmlParser.cpp
+  XmlElement.cpp
+  xmlElementParts.cpp
+  Tokenizer.cpp
+  XmlDocument.cpp
+  Utilities.cpp
+  Generating Code...
   XmlParser.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\XmlParser.exe

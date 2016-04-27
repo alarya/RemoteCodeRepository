@@ -87,7 +87,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TEST_METADATAMGR;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -142,9 +142,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\FileSystem\FileSystem.h" />
+    <ClInclude Include="..\XmlDocument\XmlDocument.h" />
+    <ClInclude Include="..\XmlElementParts\itokcollection.h" />
+    <ClInclude Include="..\XmlElementParts\Tokenizer.h" />
+    <ClInclude Include="..\XmlElementParts\xmlElementParts.h" />
+    <ClInclude Include="..\XmlElement\XmlElement.h" />
+    <ClInclude Include="..\XmlParser\XmlParser.h" />
+    <ClInclude Include="MetadataMgr.h" />
     <ClInclude Include="Repository.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\FileSystem\FileSystem.cpp" />
+    <ClCompile Include="..\XmlDocument\XmlDocument.cpp" />
+    <ClCompile Include="..\XmlElementParts\Tokenizer.cpp" />
+    <ClCompile Include="..\XmlElementParts\xmlElementParts.cpp" />
+    <ClCompile Include="..\XmlElement\XmlElement.cpp" />
+    <ClCompile Include="..\XmlParser\XmlParser.cpp" />
+    <ClCompile Include="MetadataMgr.cpp" />
     <ClCompile Include="Repository.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

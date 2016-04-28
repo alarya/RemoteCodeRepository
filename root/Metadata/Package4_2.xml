@@ -1,0 +1,16 @@
+
+  <metadata>
+    <package>
+      <name>
+        Package4
+      </name>
+      <version>
+        2
+      </version>
+      <status>
+        open
+      </status>
+    </package>
+    <dependencies>
+    </dependencies>
+  </metadata>

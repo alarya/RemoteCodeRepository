@@ -1,2 +1,3 @@
 ﻿  WindowsHelpers.cpp
+cl : Command line warning D9028: minimal rebuild failure, reverting to normal build
   zWindowsHelpers.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\zWindowsHelpers.exe

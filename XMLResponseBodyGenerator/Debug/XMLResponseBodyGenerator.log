@@ -1,2 +1,8 @@
 ﻿  XMLResponseBodyGenerator.cpp
+  XmlParser.cpp
+  XmlElement.cpp
+  xmlElementParts.cpp
+  Tokenizer.cpp
+  XmlDocument.cpp
+  Generating Code...
   XMLResponseBodyGenerator.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\XMLResponseBodyGenerator.exe

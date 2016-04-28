@@ -14,6 +14,7 @@ struct Package {
 	string version;
 	string status;
 
+	// uniquely identfy a package by its <name,version>
 	bool operator<(const Package &p) const {
 		return name < p.name || (name ==p.name &&  version < p.version) ;
 	}

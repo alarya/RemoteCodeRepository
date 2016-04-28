@@ -20,6 +20,7 @@ using namespace XmlProcessing;
 using namespace FileSystem;
 using dependency = pair<Package, vector<Package>>;
 using dependencyList = map<Package, vector<Package>>;
+using packageVersionsMap = map<string, vector<string>>;
 using sPtr = std::shared_ptr < AbstractXmlElement >;
 
 MetadataMgr::MetadataMgr()
@@ -166,8 +167,8 @@ vector<Package> MetadataMgr::parsePackageDependencies(string metadata)
 
 #pragma endregion
 
-//------------build dependency Map from metadata files----------------------------//
-dependencyList MetadataMgr::buildDependencyList()
+//------------build dependency Map and package map from metadata files----------------------------//
+void MetadataMgr::buildDependencyList(dependencyList*& depList, packageVersionsMap*& packVersionMap)
 {
 	dependencyList dependencies;
 
@@ -177,12 +178,27 @@ dependencyList MetadataMgr::buildDependencyList()
 
 	for (auto file : metadataFiles)
 	{
-		XmlDocument doc(path+file,XmlDocument::file);
+		XmlDocument doc(path + file, XmlDocument::file);
 		dependency packageDeps = parsePackageMetaData(doc.toString());
-		dependencies[packageDeps.first] = packageDeps.second;		
-	}
+		dependencies[packageDeps.first] = packageDeps.second;
+		depList->insert(packageDeps);
 
-	return dependencies;
+		if (packVersionMap->find(packageDeps.first.name) == packVersionMap->end())
+		{
+			pair<string, vector<string>> p;
+			vector<string> versions;
+			versions.push_back(packageDeps.first.version);
+			p.first = packageDeps.first.name; p.second = versions;
+			packVersionMap->insert(p);
+		}
+		else
+		{
+			vector<string> versions = (*packVersionMap)[packageDeps.first.name];
+			versions.push_back(packageDeps.first.version);
+			(*packVersionMap)[packageDeps.first.name] = versions;
+		}
+
+	}
 }
 
 
@@ -219,7 +235,10 @@ int main()
 	}
 
 	std::cout << "\n\n  -----------------------test build dependency map --------------\n";
-	for (auto dep : metadataMgr.buildDependencyList())
+	dependencyList* depList = new dependencyList();
+	packageVersionsMap* packVersionMap = new packageVersionsMap();
+	metadataMgr.buildDependencyList(depList, packVersionMap);
+	for (auto dep : *depList)
 	{
 		std::cout << "Name: " << dep.first.name << ", version: " << dep.first.version << ", status: " << dep.first.status << "\n";
 		std::cout << "Dependencies: \n";
@@ -228,6 +247,18 @@ int main()
 			std::cout << "\tName: " << deps.name << ", version: " << deps.version << ", status: " << deps.status << "\n";
 		}
 	}
+	cout << "\n-------pack version list-----------\n";
+	for (auto packVersions : *packVersionMap)
+	{
+		std::cout << "\nName: " << packVersions.first << "\n";
+		std::cout << "Versions: \n";
+		for (auto version : packVersions.second)
+		{
+			std::cout <<  version << ", ";
+		}
+	}
+	delete depList;
+	delete packVersionMap;
 }
 #endif // TEST_METADATAMGR
 

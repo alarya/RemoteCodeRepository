@@ -11,13 +11,13 @@ class MetadataMgr {
 
 	using dependency = pair<Package, vector<Package>>;
 	using dependencyList = map<Package, vector<Package>>;
-
+	using packageVersionsMap = map<string, vector<string>>;
 public:
 	MetadataMgr();
 	~MetadataMgr();
 
 	string createMetaData(Package checkIn, vector<Package> dependencies);
-	dependencyList buildDependencyList();
+	void buildDependencyList(dependencyList*& depList, packageVersionsMap*& packVersionMap);
 	dependency parsePackageMetaData(string metadata);
 private:	
 	Package MetadataMgr::parsePackageInfo(string metadata);

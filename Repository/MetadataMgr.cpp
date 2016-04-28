@@ -48,7 +48,7 @@ string MetadataMgr::createMetaData(Package checkIn, vector<Package> dependencies
 	checkInPackageVersion->addChild(makeTextElement(checkIn.version));
 	checkInPackage->addChild(checkInPackageVersion);
 	sPtr checkInPackageStatus = makeTaggedElement("status");
-	checkInPackageStatus->addChild(makeTextElement("open"));   //default check-In status
+	checkInPackageStatus->addChild(makeTextElement(checkIn.status));   //default check-In status
 	checkInPackage->addChild(checkInPackageStatus);
 	pRoot->addChild(checkInPackage);
 

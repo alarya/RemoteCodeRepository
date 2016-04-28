@@ -26,11 +26,6 @@ public:
 	string closeOpenCheckIn(Package package); //return status string as response
 	vector<string> checkOutPackage(Package package, bool includeDependencies);
 
-	//TO:DO : make private
-	bool packageExists(string packageName);
-	string latestVersionOfPackage(string packageName);
-	bool isLatestVersionofPackageClosed(string packageName);
-
 private:
 	dependencyList* packagesAndDependencies;    //maintains list of packages with it's dependencies
 	packageVersionsMap* packagesAndVersions;
@@ -38,6 +33,11 @@ private:
 	string packageDirPath = "../root";
 	string MetaDataPath = "../root/Metadata";
 	string socketUploadPath = "../root/socket_uploads";
+
+	bool packageExists(string packageName);
+	string latestVersionOfPackage(string packageName);
+	bool isLatestVersionofPackageClosed(string packageName);
+	void updatePackageAndVersionsMap(Package package);
 };
 
 #endif

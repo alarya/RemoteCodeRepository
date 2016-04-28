@@ -12,6 +12,7 @@ using dependency = pair<Package, vector<Package>>;
 using dependencyList = map<Package, vector<Package>>;
 using packageVersionsMap = map<string, vector<string>>;
 using PackageList = vector<Package>;
+using namespace std;
 
 /////////////////////////////////////////////////////////
 // Repository class
@@ -56,6 +57,7 @@ PackageList Repository::getPackageList()
 
 
 #pragma endregion
+
 
 #pragma region CHECKIN
 
@@ -106,20 +108,7 @@ string Repository::checkInPackage(Package package, PackageList dependencies)
 
 	//update dep lookup table and package version lookup table
 	(*packagesAndDependencies)[package] = dependencies;
-	if (packagesAndVersions->find(package.name) == packagesAndVersions->end())
-	{
-		vector<string> versions;  versions.push_back("1");
-		(*packagesAndVersions)[package.name] = versions;
-	}
-	else
-	{
-		if (latestVersionOfPackage(package.name) != package.version)
-		{
-			vector<string> versions = (*packagesAndVersions)[package.name];
-			versions.push_back(package.version);
-			(*packagesAndVersions)[package.name] = versions;
-		}
-	}
+	updatePackageAndVersionsMap(package);
 
 	return "Package Checked-In";
 }
@@ -214,17 +203,52 @@ vector<string> Repository::checkOutPackage(Package package, bool includeDependen
 
 #pragma endregion
 
-#pragma region 
+
+#pragma region CloseOpenCheckIn
 
 //-------------close checkIn for a package-------------------------------//
 string Repository::closeOpenCheckIn(Package package)
 {
+	dependency packageDep;
+	package.status = "closed";
+	packageDep.first = package; packageDep.second = (*packagesAndDependencies)[package];
 
-	return "";
+	FileMgr fileMgr;
+	MetadataMgr metadataMgr;
+	string destnPath = MetaDataPath;
+	string metadata = metadataMgr.createMetaData(package, packageDep.second);
+	fileMgr.createMetadataFile(package, destnPath, metadata);
+
+	//update lookup tables
+	PackageList depList = (*packagesAndDependencies)[package];
+	packagesAndDependencies->erase(package);
+	(*packagesAndDependencies)[package] = depList;
+	updatePackageAndVersionsMap(package);
+
+	return "Package check-In has been closed";
 }
 
 #pragma endregion
 
+
+//--------------update package versions map------------------------------//
+void Repository::updatePackageAndVersionsMap(Package package)
+{
+	if (packagesAndVersions->find(package.name) == packagesAndVersions->end())
+	{
+		vector<string> versions;  versions.push_back("1");
+		(*packagesAndVersions)[package.name] = versions;
+	}
+	else
+	{
+		if (latestVersionOfPackage(package.name) != package.version)
+		{
+			vector<string> versions = (*packagesAndVersions)[package.name];
+			versions.push_back(package.version);
+			(*packagesAndVersions)[package.name] = versions;
+		}
+	}
+}
 
 
 
@@ -280,6 +304,14 @@ int main()
 	/*Package checkOutPackage; checkOutPackage.name = "Package1"; checkOutPackage.version = "2";
 	vector<string> checkoutFiles = repo.checkOutPackage(checkOutPackage, true);*/
 
+	//-------test closing an existing open check-In---------//
+	Package closeCheckIn; closeCheckIn.name = "Package4"; closeCheckIn.version = "2";
+	repo.closeOpenCheckIn(closeCheckIn);
+	availablePackages = repo.getPackageList();
+	for (auto package : availablePackages)
+		cout << "Name: " + package.name << ", version: " << package.version << ", status: " << package.status << "\n";
+
+	cout << "\n";
 }
 
 #endif // TEST_REPOSITORY

@@ -24,6 +24,7 @@ public:
 	string checkInPackage(Package package, PackageList dependencies); //return status string as response
 	PackageList getOpenCheckIns();
 	string closeOpenCheckIn(Package package); //return status string as response
+	vector<string> checkOutPackage(Package package, bool includeDependencies);
 
 	//TO:DO : make private
 	bool packageExists(string packageName);

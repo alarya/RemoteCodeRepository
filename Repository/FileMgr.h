@@ -17,6 +17,7 @@ public:
 	bool createDir(string path, string dirName);
 	bool copyPackage(string sourcePath, string packageName, string destnPath); //overwrites if already exists
 	bool createMetadataFile(Package package, string destnPath, string metadata);
+	string getFileSpec(string relativePath);
 private:
 
 };

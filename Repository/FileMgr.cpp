@@ -77,7 +77,7 @@ bool FileMgr::copyPackage(string sourcePath,string packageName, string destnPath
 	return true;
 }
 
-
+//----------create metadata for a package (overwrites if already exists)-----------//
 bool FileMgr::createMetadataFile(Package package, string destnPath, string metadata)
 {
 	string fileName = package.name + "_" + package.version + ".xml";
@@ -91,7 +91,11 @@ bool FileMgr::createMetadataFile(Package package, string destnPath, string metad
 	return false;
 }
 
-
+//--------returns full path of a file from relative path------------------------//
+string FileMgr::getFileSpec(string relativePath)
+{
+	return Path::getFullFileSpec(relativePath);
+}
 
 #ifdef TEST_FILEMGR
 

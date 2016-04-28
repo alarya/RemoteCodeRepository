@@ -6,6 +6,7 @@
 #include "Repository.h"
 #include "FileMgr.h"
 #include <string>
+#include <unordered_set>
 
 using dependency = pair<Package, vector<Package>>;
 using dependencyList = map<Package, vector<Package>>;
@@ -56,7 +57,6 @@ PackageList Repository::getPackageList()
 
 #pragma endregion
 
-
 #pragma region CHECKIN
 
 //-------------Check-In a new package into the repository-----------------//
@@ -102,6 +102,23 @@ string Repository::checkInPackage(Package package, PackageList dependencies)
 		fileMgr.createDir(packageDirPath, package.name + "_" + package.version);
 		fileMgr.copyPackage(socketUploadPath, package.name, newDir);
 		fileMgr.createMetadataFile(package, MetaDataPath, metaDataMgr.createMetaData(package, dependencies));
+	}
+
+	//update dep lookup table and package version lookup table
+	(*packagesAndDependencies)[package] = dependencies;
+	if (packagesAndVersions->find(package.name) == packagesAndVersions->end())
+	{
+		vector<string> versions;  versions.push_back("1");
+		(*packagesAndVersions)[package.name] = versions;
+	}
+	else
+	{
+		if (latestVersionOfPackage(package.name) != package.version)
+		{
+			vector<string> versions = (*packagesAndVersions)[package.name];
+			versions.push_back(package.version);
+			(*packagesAndVersions)[package.name] = versions;
+		}
 	}
 
 	return "Package Checked-In";
@@ -163,13 +180,53 @@ PackageList Repository::getOpenCheckIns()
 #pragma endregion
 
 
+#pragma region Check-OutPackage
 
-//-------------close checkInf for a package-------------------------------//
+//----------returns a list of file path needed to be check-Out a package----------//
+vector<string> Repository::checkOutPackage(Package package, bool includeDependencies)
+{
+	vector<string> filePaths;
+	FileMgr fileMgr;
+
+	string pathCppFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".cpp");
+	string pathHFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".h");
+	filePaths.push_back(pathCppFile);
+	filePaths.push_back(pathHFile);
+
+	if (includeDependencies)
+	{
+		//there might be a case where circular dependencies exist so use a unordered set of to check if it was added already
+		/*TO-DO: include entire dependency graph, currently only adding directly dependent packages*/
+		/*unordered_set<Package> found;
+		vector<Package> dependencies;*/
+
+		for (auto package_ : (*packagesAndDependencies)[package])
+		{
+			string pathCppFile = fileMgr.getFileSpec(packageDirPath + "/" + package_.name + "_" + package_.version + "/" + package_.name + ".cpp");
+			string pathHFile = fileMgr.getFileSpec(packageDirPath + "/" + package_.name + "_" + package_.version + "/" + package_.name + ".h");
+			filePaths.push_back(pathCppFile);
+			filePaths.push_back(pathHFile);
+		}
+	}
+
+	return filePaths;
+}
+
+#pragma endregion
+
+#pragma region 
+
+//-------------close checkIn for a package-------------------------------//
 string Repository::closeOpenCheckIn(Package package)
 {
 
 	return "";
 }
+
+#pragma endregion
+
+
+
 
 #ifdef TEST_REPOSITORY
 int main()
@@ -191,7 +248,7 @@ int main()
 
 	//cout << "\n\n---------Test Check-In of a package-------------\n";
 
-	////private helper function test
+	////private helper function tests
 	//string packageName = "Package5";
 	//cout << "Package Name: " << packageName << "\n";
 	//cout << "is available ? : " << repo.packageExists(packageName) << "\n";
@@ -212,12 +269,16 @@ int main()
 	//dependencies.push_back(dep1);
 	//repo.checkInPackage(newPackage, dependencies);
 
-	//check-In package when lates version is open
+	//test check-In package when latest version is open
 /*	Package newPackage; newPackage.name = "Package4";
 	PackageList dependencies;
 	Package dep1; dep1.name = "Package5"; dep1.version = "1";
 	dependencies.push_back(dep1);
 	repo.checkInPackage(newPackage, dependencies);*/	
+
+	//--------test checking-Out package function------------//
+	/*Package checkOutPackage; checkOutPackage.name = "Package1"; checkOutPackage.version = "2";
+	vector<string> checkoutFiles = repo.checkOutPackage(checkOutPackage, true);*/
 
 }
 

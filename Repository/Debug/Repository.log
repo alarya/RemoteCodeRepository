@@ -1,2 +1,11 @@
 ﻿  Repository.cpp
+  MetadataMgr.cpp
+  FileMgr.cpp
+  XmlParser.cpp
+  XmlElement.cpp
+  xmlElementParts.cpp
+  Tokenizer.cpp
+  XmlDocument.cpp
+  FileSystem.cpp
+  Generating Code...
   Repository.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\Repository.exe

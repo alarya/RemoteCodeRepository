@@ -24,6 +24,8 @@
 #include "../Utilities/Utilities.h"
 #include "../Logger/Cpp11-BlockingQueue.h"
 #include "../HttpMessage/HttpMessage.h"
+#include "../Repository/Repository.h"
+#include "../XMLResponseBodyGenerator/XMLResponseBodyGenerator.h"
 #include <string>
 #include <iostream>
 
@@ -40,9 +42,11 @@ public:
 	void operator()(Socket& socket_);
 	BlockingQueue<HttpMessage>& RecvQ();
 private:
-	void handleGetFiles(Socket& socket_);
-	bool handleCheckIn(Socket& socket_);
-	void handleCheckOut(Socket& socket_);
+	void handleGetFiles(Socket& socket_, HttpMessage httpMessage);
+	bool handleCheckIn(Socket& socket_, HttpMessage httpMessage);
+	void handleCheckOut(Socket& socket_, HttpMessage httpMessage);
+	void handleGetOpenCheckIn(Socket& socket_, HttpMessage httpMessage);
+	void handleCloseOpenCheckIn(Socket& socket_, HttpMessage httpMessage);
 	static BlockingQueue<HttpMessage> recvQ;
 };
 
@@ -61,21 +65,36 @@ void ClientHandler::operator()(Socket& socket_)
 		HttpMessage httpMessage;
 		httpMessage.parseMessage(msg);
 		std::string command = httpMessage.findValue("Command");
-		std::string client = httpMessage.findValue("FromAddr");
-		std::cout << "\nRequest: " << command << "  Client: " << client << "\n";
+		std::cout << "\nMessage Received From Client \n";
+		std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+		std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+		std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+		std::string body;
+		for (auto c : httpMessage.body())
+			body += c;
+		std::cout << "Body: " << body << "\n";
+
 		
 		if (command == "GetFiles")
 		{
-			handleGetFiles(socket_);			
+			handleGetFiles(socket_,httpMessage);			
 		}
 		else if (command == "Check-In")
 		{
-			if (!handleCheckIn(socket_))
+			if (!handleCheckIn(socket_, httpMessage))
 				break;
 		}
 		else if (command == "Check-Out")
 		{
-			handleCheckOut(socket_);
+			handleCheckOut(socket_, httpMessage);
+		}
+		else if (command == "GetOpenCheck-In")
+		{
+
+		}
+		else if (command == "CloseOpenCheck-In")
+		{
+
 		}
 		else if (command == "quit")
 		{			
@@ -96,13 +115,13 @@ void ClientHandler::operator()(Socket& socket_)
 }
 
 //------------Handle get files request------------//
-void ClientHandler::handleGetFiles(Socket& socket_)
+void ClientHandler::handleGetFiles(Socket& socket_, HttpMessage httpMessage)
 {
-	std::cout << "\nSending Files....\n";
+
 }
 
 //-----------Handle CheckIn requests ------------//
-bool ClientHandler::handleCheckIn(Socket& socket_)
+bool ClientHandler::handleCheckIn(Socket& socket_, HttpMessage httpMessage)
 {
 	std::cout << "\nCheck-In File....\n";
 	//making up shit for time being
@@ -125,9 +144,21 @@ bool ClientHandler::handleCheckIn(Socket& socket_)
 }
 
 //-------Handle CheckOut requests----------------//
-void ClientHandler::handleCheckOut(Socket& socket_)
+void ClientHandler::handleCheckOut(Socket& socket_, HttpMessage httpMessage)
 {
 	std::cout << "\nCheck-Out File....\n";
+}
+
+//-------Handle Get Open check Ins request-------//
+void ClientHandler::handleGetOpenCheckIn(Socket& socket_, HttpMessage httpMessage)
+{
+
+}
+
+//-------Handler Close open check In request------//
+void ClientHandler::handleCloseOpenCheckIn(Socket& socket_, HttpMessage httpMessage)
+{
+
 }
 
 BlockingQueue<HttpMessage>& ClientHandler::RecvQ()
@@ -224,12 +255,41 @@ int main()
 		sendThread.detach();
 
 		std::cout << "\n\nServer started at 8080............\n\n";
-		std::cout << "Press any Key to break";
 
+		//Initialize Repository
+		Repository repo;
+		XMLResponseBodyGenerator xmlResponseBodyGenerator;
 		while (true)
 		{
 			//check for enqueued messages handled by client handler (Blocks on empty queue)
 			HttpMessage msg = cp.RecvQ().deQ();
+
+
+			//process from Repository related tasks in main thread
+			std::string command_ = msg.findValue("Command");
+
+			std::string body;
+			if (command_ == "GetFiles")
+			{
+				body = xmlResponseBodyGenerator.getResponseBodyForGetFiles(repo.getPackageList());
+			}
+			else if (command_ == "Check-In")
+			{
+
+			}
+			else if (command_ == "Check-Out")
+			{
+		
+			}
+			else if (command_ == "GetOpenCheck-In")
+			{
+				body = xmlResponseBodyGenerator.getResponseBodyForGetFiles(repo.getOpenCheckIns());
+			}
+			else if (command_ == "CloseOpenCheck-In")
+			{
+
+			}
+
 
 			//prepare response
 			HttpMessage response;
@@ -239,6 +299,8 @@ int main()
 			response.addAttribute(ToAddr);
 			Attribute FromAddr; FromAddr.first = "FromAddr"; FromAddr.second = msg.findValue("ToAddr");
 			response.addAttribute(FromAddr);
+			response.setBody(body);
+
 
 			/*enqueue response*/
 			sendQ.enQ(response);

@@ -305,13 +305,11 @@ int main()
 	vector<string> checkoutFiles = repo.checkOutPackage(checkOutPackage, true);*/
 
 	//-------test closing an existing open check-In---------//
-	Package closeCheckIn; closeCheckIn.name = "Package4"; closeCheckIn.version = "2";
-	repo.closeOpenCheckIn(closeCheckIn);
-	availablePackages = repo.getPackageList();
-	for (auto package : availablePackages)
-		cout << "Name: " + package.name << ", version: " << package.version << ", status: " << package.status << "\n";
-
-	cout << "\n";
+	//Package closeCheckIn; closeCheckIn.name = "Package4"; closeCheckIn.version = "2";
+	//repo.closeOpenCheckIn(closeCheckIn);
+	//availablePackages = repo.getPackageList();
+	//for (auto package : availablePackages)
+	//	cout << "Name: " + package.name << ", version: " << package.version << ", status: " << package.status << "\n";
 }
 
 #endif // TEST_REPOSITORY

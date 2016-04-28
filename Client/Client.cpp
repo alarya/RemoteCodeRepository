@@ -36,6 +36,7 @@ using namespace Utilities;
 // Client handler
 //
 // Runs a different thread for each response
+
 class ClientHandler
 {
 public:
@@ -43,6 +44,11 @@ public:
 	BlockingQueue<HttpMessage>& RecvQ();
 private:	
 	static BlockingQueue<HttpMessage> recvQ;      //shared by all client handlers 
+	void GetFiles(Socket& si, HttpMessage httpMessage);
+	void CheckIn(Socket& si, HttpMessage httpMessage);
+	void GetOpenCheckIns(Socket& si, HttpMessage httpMessage);
+	void CloseOpenCheckIn(Socket& si, HttpMessage httpMessage);
+	void CheckOut(Socket& si, HttpMessage httpMessage);
 };
 
 BlockingQueue<HttpMessage> ClientHandler::recvQ;
@@ -53,13 +59,41 @@ void ClientHandler::operator()(Socket& socket_)
 	while (true)
 	{
 		std::string msg = socket_.recvString();
-		Show::write("\n  Client recvd message \"" + msg + "\"");
-		if (msg == "quit")
+		
+		if (msg.size() == 0)
 			break;
 
-		//enque in recvQ
 		HttpMessage httpMessage;
 		httpMessage.parseMessage(msg);
+		
+		std::string command = httpMessage.findValue("Command");
+
+		if (command == "GetFiles")
+		{
+			GetFiles(socket_, httpMessage);
+		}
+		else if (command == "Check-In")
+		{
+			CheckIn(socket_, httpMessage);
+		}
+		else if (command == "Check-Out")
+		{
+			CheckOut(socket_, httpMessage);
+		}
+		else if (command == "GetOpenCheck-In")
+		{
+			GetOpenCheckIns(socket_, httpMessage);
+		}
+		else if (command == "CloseOpenCheck-In")
+		{
+			CloseOpenCheckIn(socket_, httpMessage);
+		}
+		else if (command == "quit")
+		{
+			break;
+		}
+		
+		//enque in recvQ
 		recvQ.enQ(httpMessage);
 	}
 }
@@ -68,6 +102,74 @@ void ClientHandler::operator()(Socket& socket_)
 BlockingQueue<HttpMessage>& ClientHandler::RecvQ() {
 	return recvQ;
 }
+
+#pragma region ClienHandler_Commands
+
+void ClientHandler::GetFiles(Socket& si, HttpMessage httpMessage)
+{
+	std::cout << "\nResponse recieved:- \n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+
+}
+
+void ClientHandler::CheckIn(Socket& si, HttpMessage httpMessage)
+{
+	std::cout << "\nResponse recieved:- \n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+}
+
+void ClientHandler::GetOpenCheckIns(Socket& si, HttpMessage httpMessage)
+{
+	std::cout << "\nResponse recieved:- \n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+}
+
+void ClientHandler::CloseOpenCheckIn(Socket& si, HttpMessage httpMessage)
+{
+	std::cout << "\nResponse recieved:- \n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+}
+
+void ClientHandler::CheckOut(Socket& si, HttpMessage httpMessage)
+{
+	std::cout << "\nResponse recieved:- \n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+}
+
+#pragma endregion
+
+
+
 
 
 //////////////////////////////////////////////////////////////////////
@@ -78,39 +180,142 @@ class Sender
 {
 public:
 	void operator()(BlockingQueue<HttpMessage>& sendQ, SocketConnecter& si);
+private:
+	void GetFiles(SocketConnecter& si, HttpMessage httpMessage);
+	void CheckIn(SocketConnecter& si, HttpMessage httpMessage);
+	void GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage);
+	void CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage);
+	void CheckOut(SocketConnecter& si, HttpMessage httpMessage);
 };
 
+//---------------sender thread----------------------------------------------//
 void Sender::operator()(BlockingQueue<HttpMessage>& sendQ,SocketConnecter& si)
 {
 	while (true)
 	{
 		HttpMessage httpMessage = sendQ.deQ();
-		std::cout << "\nSending message to Server..\n";
-		si.sendString(httpMessage.buildMessage());
+		
+		std::string command = httpMessage.findValue("Command");
 
-
-		//------check if file transfer needed--------
-		if ( httpMessage.findValue("Command") == "Check-In")
+		if (command == "GetFiles")
 		{
-			std::cout << "\nSending file to Server..\n";
-			//mocking fileTransfer
-			const int bufferLen = 2000;   //mocking for now, ideally previous message will send file length
-			std::size_t fileLength = 200;
-			char buffer[bufferLen];
-			for (int i = 0; i < 200; i++)
-					buffer[i] = 'a';
-
-			si.send(fileLength, buffer);
+			GetFiles(si, httpMessage);
 		}
-		//------------------------------------------
-
+		else if (command == "Check-In")
+		{
+			CheckIn(si, httpMessage);
+		}
+		else if (command == "Check-Out")
+		{
+			CheckOut(si, httpMessage);
+		}
+		else if (command == "GetOpenCheck-In")
+		{
+			GetOpenCheckIns(si, httpMessage);
+		}
+		else if (command == "CloseOpenCheck-In")
+		{
+			CloseOpenCheckIn(si, httpMessage);
+		}
+		else if (command == "quit")
+		{
+			break;
+		}
 	}
 }
 
+#pragma region Sender_Commands
 
+//-------------Command: GetFiles------------------------//
+void Sender::GetFiles(SocketConnecter& si, HttpMessage httpMessage)
+{
+	std::cout << "\nSending Message to Server:-\n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+	
+	si.sendString(httpMessage.buildMessage());
+}
 
+//------------Command: CheckIn--------------------------//
+void Sender::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
+{
+	std::cout << "\nSending Message to Server:-\n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
 
+	si.sendString(httpMessage.buildMessage());
 
+	//transfer the file
+	if (httpMessage.findValue("Command") == "Check-In")
+	{
+		std::cout << "\nSending file to Server..\n";
+		//mocking fileTransfer
+		const int bufferLen = 2000;   //mocking for now, ideally previous message will send file length
+		std::size_t fileLength = 200;
+		char buffer[bufferLen];
+		for (int i = 0; i < 200; i++)
+			buffer[i] = 'a';
+
+		si.send(fileLength, buffer);
+	}
+}
+
+//-----------Command: GetOpenCheckIns------------------//
+void Sender::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage)
+{
+	std::cout << "\nSending Message to Server:-\n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+
+	si.sendString(httpMessage.buildMessage());
+}
+
+//----------Command: CloseOpenCheckIn------------------//
+void Sender::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
+{
+	std::cout << "\nSending Message to Server:-\n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+
+	si.sendString(httpMessage.buildMessage());
+}
+
+//----------Command: CheckOut--------------------------//
+void Sender::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
+{
+	std::cout << "\nSending Message to Server:-\n";
+	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
+	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
+	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
+	std::string body;
+	for (auto c : httpMessage.body())
+		body += c;
+	std::cout << "Body: " << body << "\n";
+
+	si.sendString(httpMessage.buildMessage());
+}
+
+#pragma endregion
 
 
 //--------------Client main thread-----------------------------//
@@ -159,11 +364,13 @@ int main()
 			std::cout << "\nEnter a command: ";
 			std::getline(std::cin, command); 
 
+			//don't send anymore commands: quit
 			if (command == "quit")
 			{				
 				break;
 			}
 
+			//----Add hearders for command,fromAddr, ToAddr----------------------//
 			Attribute commandAttrib;
 			commandAttrib.first = "Command"; commandAttrib.second = command;
 			httpMessage.addAttribute(commandAttrib);
@@ -174,17 +381,17 @@ int main()
 			ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
 			httpMessage.addAttribute(ToAddrAttrib);
 
-			Body body;						
-			httpMessage.setBody("someBody");
+			//Body body;						
+			//httpMessage.setBody("someBody");
 
 			//place message to send on the sendQ
 			sendQ.enQ(httpMessage);
 
-
 			//wait for response
 			HttpMessage response = cp.RecvQ().deQ();
-			std::cout << "\nResponse recieved for: Command: " << response.findValue("Command");
-			
+			//std::cout << "\nResponse recieved for: Command: " << response.findValue("Command");	
+			//do something with the response
+
 		}
 
 		si.shutDownSend(); //quit command sent as input

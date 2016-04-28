@@ -143,18 +143,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\FileSystem\FileSystem.h" />
     <ClInclude Include="..\HttpMessage\HttpMessage.h" />
     <ClInclude Include="..\Logger\Cpp11-BlockingQueue.h" />
     <ClInclude Include="..\Logger\Logger.h" />
+    <ClInclude Include="..\Repository\FileMgr.h" />
+    <ClInclude Include="..\Repository\MetadataMgr.h" />
+    <ClInclude Include="..\Repository\Repository.h" />
     <ClInclude Include="..\Sockets\Sockets.h" />
     <ClInclude Include="..\Utilities\Utilities.h" />
+    <ClInclude Include="..\XmlDocument\XmlDocument.h" />
+    <ClInclude Include="..\XmlElementParts\itokcollection.h" />
+    <ClInclude Include="..\XmlElementParts\Tokenizer.h" />
+    <ClInclude Include="..\XmlElementParts\xmlElementParts.h" />
+    <ClInclude Include="..\XmlElement\XmlElement.h" />
+    <ClInclude Include="..\XmlParser\XmlParser.h" />
+    <ClInclude Include="..\XMLResponseBodyGenerator\XMLResponseBodyGenerator.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\FileSystem\FileSystem.cpp" />
     <ClCompile Include="..\HttpMessage\HttpMessage.cpp" />
     <ClCompile Include="..\Logger\Cpp11-BlockingQueue.cpp" />
     <ClCompile Include="..\Logger\Logger.cpp" />
+    <ClCompile Include="..\Repository\FileMgr.cpp" />
+    <ClCompile Include="..\Repository\MetadataMgr.cpp" />
+    <ClCompile Include="..\Repository\Repository.cpp" />
     <ClCompile Include="..\Sockets\Sockets.cpp" />
     <ClCompile Include="..\Utilities\Utilities.cpp" />
+    <ClCompile Include="..\XmlDocument\XmlDocument.cpp" />
+    <ClCompile Include="..\XmlElementParts\Tokenizer.cpp" />
+    <ClCompile Include="..\XmlElementParts\xmlElementParts.cpp" />
+    <ClCompile Include="..\XmlElement\XmlElement.cpp" />
+    <ClCompile Include="..\XmlParser\XmlParser.cpp" />
+    <ClCompile Include="..\XMLResponseBodyGenerator\XMLResponseBodyGenerator.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

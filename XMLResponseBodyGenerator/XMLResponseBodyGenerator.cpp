@@ -31,6 +31,7 @@ XMLResponseBodyGenerator::~XMLResponseBodyGenerator()
 //------------------Parsing for GetFiles Command----------------------------------------//
 
 #pragma region GetFilesParse
+
 string XMLResponseBodyGenerator::getResponseBodyForGetFiles(vector<Package> packageList)
 {
 	sPtr pRoot = makeTaggedElement("packages");
@@ -62,42 +63,22 @@ vector<Package> XMLResponseBodyGenerator::parseResponseBodyForGetFiles(string re
 	{
 		for (auto package : packages)
 		{
-			Package package_;
-			vector<sPtr> _p = package->children();
-			for (auto packageInfo : _p)
-			{
-				if (packageInfo->tag() == "name")
-				{
-					vector<sPtr> packageInfoName = packageInfo->children();
-					for (auto child : packageInfoName)
-						package_.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-				if (packageInfo->tag() == "version")
-				{
-					vector<sPtr> packageInfoVersion = packageInfo->children();
-					for (auto child : packageInfoVersion)
-						package_.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-				if (packageInfo->tag() == "status")
-				{
-					vector<sPtr> packageInfoStatus = packageInfo->children();
-					for (auto child : packageInfoStatus)
-						package_.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-			}
+			Package package_ = parsePackageElement(package);
+			
 			if (package_.name != "")
 				parsedPackages.push_back(package_);
 		}
 	}
 	return parsedPackages;
 }
+
 #pragma endregion
 
 //------------------Parsing for Check-In Command----------------------------------------//
 
 #pragma region CheckInParse
 
-string XMLResponseBodyGenerator::getRequestBodyForCheckIn(CheckInPackage checkInPackage, vector<Package> dependencies)
+string XMLResponseBodyGenerator::getRequestBodyForCheckIn(Package checkInPackage, vector<Package> dependencies)
 {
 	sPtr pRoot = makeTaggedElement("Check-In");
 	XmlDocument doc(XmlProcessing::makeDocElement(pRoot));
@@ -105,11 +86,11 @@ string XMLResponseBodyGenerator::getRequestBodyForCheckIn(CheckInPackage checkIn
 			sPtr packageName = makeTaggedElement("name");
 			packageName->addChild(makeTextElement(checkInPackage.name));
 			package->addChild(packageName);
-			sPtr packageCppLength = makeTaggedElement("cppfilelength");
-			packageCppLength->addChild(makeTextElement(checkInPackage.cppFileLength));
+			sPtr packageCppLength = makeTaggedElement("version");
+			packageCppLength->addChild(makeTextElement(checkInPackage.version));
 			package->addChild(packageCppLength);
-			sPtr packageHLength = makeTaggedElement("hfilelength");
-			packageHLength->addChild(makeTextElement(checkInPackage.hFileLength));
+			sPtr packageHLength = makeTaggedElement("status");
+			packageHLength->addChild(makeTextElement(checkInPackage.status));
 			package->addChild(packageHLength);			
 	    pRoot->addChild(package);
 
@@ -142,29 +123,7 @@ vector<Package> XMLResponseBodyGenerator::parseRequestBodyForDependenciesInCheck
 	{
 		for (auto package : dependencies)
 		{
-			Package package_;
-			vector<sPtr> _p = package->children();
-			for (auto packageInfo : _p)
-			{
-				if (packageInfo->tag() == "name")
-				{
-					vector<sPtr> packageInfoName = packageInfo->children();
-					for (auto child : packageInfoName)
-						package_.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-				if (packageInfo->tag() == "version")
-				{
-					vector<sPtr> packageInfoVersion = packageInfo->children();
-					for (auto child : packageInfoVersion)
-						package_.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-				if (packageInfo->tag() == "status")
-				{
-					vector<sPtr> packageInfoStatus = packageInfo->children();
-					for (auto child : packageInfoStatus)
-						package_.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-			}
+			Package package_ = parsePackageElement(package);
 			if (package_.name != "")
 				dependencyPackages.push_back(package_);
 		}
@@ -172,9 +131,9 @@ vector<Package> XMLResponseBodyGenerator::parseRequestBodyForDependenciesInCheck
 	return dependencyPackages;
 }
 
-CheckInPackage XMLResponseBodyGenerator::parseRequestBodyForCheckInPackage(string requestBody)
+Package XMLResponseBodyGenerator::parseRequestBodyForCheckInPackage(string requestBody)
 {
-	CheckInPackage checkInPackage;
+	Package checkInPackage;
 	XmlDocument doc(requestBody);
 	vector<sPtr> package = doc.element("package").select();
 	sPtr package_ = package[0];
@@ -187,17 +146,17 @@ CheckInPackage XMLResponseBodyGenerator::parseRequestBodyForCheckInPackage(strin
 			for (auto child : packageInfoName)
 				checkInPackage.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
 		}
-		if (packageInfo->tag() == "cppfilelength")
+		if (packageInfo->tag() == "version")
 		{
 			vector<sPtr> packageInfoVersion = packageInfo->children();
 			for (auto child : packageInfoVersion)
-				checkInPackage.cppFileLength = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+				checkInPackage.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
 		}
-		if (packageInfo->tag() == "hfilelength")
+		if (packageInfo->tag() == "status")
 		{
 			vector<sPtr> packageInfoStatus = packageInfo->children();
 			for (auto child : packageInfoStatus)
-				checkInPackage.hFileLength = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+				checkInPackage.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
 		}
 	}
 
@@ -205,6 +164,35 @@ CheckInPackage XMLResponseBodyGenerator::parseRequestBodyForCheckInPackage(strin
 }
 
 #pragma endregion
+
+
+Package XMLResponseBodyGenerator::parsePackageElement(sPtr package)
+{
+	Package package_;
+	vector<sPtr> _p = package->children();
+	for (auto packageInfo : _p)
+	{
+		if (packageInfo->tag() == "name")
+		{
+			vector<sPtr> packageInfoName = packageInfo->children();
+			for (auto child : packageInfoName)
+				package_.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "version")
+		{
+			vector<sPtr> packageInfoVersion = packageInfo->children();
+			for (auto child : packageInfoVersion)
+				package_.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "status")
+		{
+			vector<sPtr> packageInfoStatus = packageInfo->children();
+			for (auto child : packageInfoStatus)
+				package_.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+	}
+	return package_;
+}
 
 #ifdef TEST_XMLRESPONSEBODYGEN
 
@@ -233,8 +221,8 @@ int main()
 
 	std::cout << "\n\n\n";
 	std::cout << "\n---------testing getRequestBodyForCheckIn-----------\n\n";
-	CheckInPackage checkInPackage; vector<Package> dependencies;
-	checkInPackage.name = "Package3"; checkInPackage.cppFileLength = "1024"; checkInPackage.hFileLength = "768";
+	Package checkInPackage; vector<Package> dependencies;
+	checkInPackage.name = "Package3"; checkInPackage.version = "2"; checkInPackage.status = "open";
 	dependencies = packages;
 	
 	std::string getRequestBodyForCheckIn = xml.getRequestBodyForCheckIn(checkInPackage, dependencies);
@@ -242,11 +230,11 @@ int main()
 
 	std::cout << "\n---------testing parseRequestBodyForDependenciesInCheckIn-----------\n";
 	vector<Package> deps = xml.parseRequestBodyForDependenciesInCheckIn(getRequestBodyForCheckIn);
-	CheckInPackage checkInPackageParsed = xml.parseRequestBodyForCheckInPackage(getRequestBodyForCheckIn);
+	Package checkInPackageParsed = xml.parseRequestBodyForCheckInPackage(getRequestBodyForCheckIn);
 	std::cout << "Check-In Package \n";
 	std::cout << "name: " << checkInPackageParsed.name << "\n";
-	std::cout << "CppFileLength: " << checkInPackageParsed.cppFileLength << "\n";
-	std::cout << "hFileLength: " << checkInPackageParsed.hFileLength << "\n";
+	std::cout << "Status: " << checkInPackageParsed.status << "\n";
+	std::cout << "Version: " << checkInPackageParsed.version << "\n";
 	std::cout << "------------dependencies--------------\n";
 	for (auto package : deps)
 	{

@@ -24,12 +24,23 @@
 #include "../Utilities/Utilities.h"
 #include "../HttpMessage/HttpMessage.h"
 #include "../Logger/Cpp11-BlockingQueue.h"
+#include "../XMLResponseBodyGenerator/XMLResponseBodyGenerator.h"
+#include "../FileSystem/FileSystem.h"
 #include <string>
 #include <iostream>
 #include <thread>
 
+
+using byte = std::string;
+using Name = std::string;
+using Value = std::string;
+using Attribute = std::pair<Name, Value>;
+using Attributes = std::vector<Attribute>;
+using Body = std::vector<byte>;
+using Message = std::string;
 using Show = StaticLogger<1>;
 using namespace Utilities;
+using namespace FileSystem;
 
 
 /////////////////////////////////////////////////////////////////////
@@ -221,6 +232,10 @@ void Sender::operator()(BlockingQueue<HttpMessage>& sendQ,SocketConnecter& si)
 		{
 			break;
 		}
+		else
+		{
+			si.sendString(httpMessage.buildMessage());
+		}
 	}
 }
 
@@ -244,43 +259,95 @@ void Sender::GetFiles(SocketConnecter& si, HttpMessage httpMessage)
 //------------Command: CheckIn--------------------------//
 void Sender::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
 {
+	
+	//mocking checkIn Package and it's dependencies
+	Package checkInPackage;
+	checkInPackage.name = "Package5"; 
+	vector<Package> dependencies; 
+	Package dep1; dep1.name = "Package4"; dep1.version = "1";
+	dependencies.push_back(dep1);
+
+	string cppFileName = checkInPackage.name + ".cpp";
+	string hFileName = checkInPackage.name + ".h";
+	string uploadDir = "../clientFolder/Upload";
+	FileInfo cppFileInfo(uploadDir + "/" + cppFileName);
+	FileInfo hFileInfo(uploadDir + "/" + hFileName);
+
+	Attribute cppFileLengthAttrib ; 
+	cppFileLengthAttrib.first = "cppFileLength"; 
+	cppFileLengthAttrib.second = std::to_string( cppFileInfo.size() );
+	Attribute hFileLengthAttrib ;
+	hFileLengthAttrib.first = "hFileLength";
+	hFileLengthAttrib.second = std::to_string(hFileInfo.size());
+
+	httpMessage.addAttribute(cppFileLengthAttrib);
+	httpMessage.addAttribute(hFileLengthAttrib);
+
+	XMLResponseBodyGenerator xml;
+	string body = xml.getRequestBodyForCheckIn(checkInPackage, dependencies);
+	
+	httpMessage.setBody(body);
+
 	std::cout << "\nSending Message to Server:-\n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 
 	si.sendString(httpMessage.buildMessage());
 
-	//transfer the file
-	if (httpMessage.findValue("Command") == "Check-In")
-	{
-		std::cout << "\nSending file to Server..\n";
-		//mocking fileTransfer
-		const int bufferLen = 2000;   //mocking for now, ideally previous message will send file length
-		std::size_t fileLength = 200;
-		char buffer[bufferLen];
-		for (int i = 0; i < 200; i++)
-			buffer[i] = 'a';
+	/*Server waits for the package files when it sees a Check-In command*/
+	std::cout << "\nSending files to Server..\n";
 
-		si.send(fileLength, buffer);
+	const size_t BlockSize = 2048;
+	const int bufferLen = 2000;
+	char buffer[bufferLen];
+
+	//--------Send Cpp file first--------------
+	File cppFile(uploadDir + "/" + cppFileName);
+	cppFile.open(File::in, File::binary);
+	if (!cppFile.isGood())
+	{
+		si.shutDownSend();
+		return;
 	}
+	while (true)
+	{
+		Block blk = cppFile.getBlock(BlockSize);
+		if (blk.size() == 0)
+			break;
+		for (size_t i = 0; i < blk.size(); ++i)
+			buffer[i] = blk[i];
+		si.send(blk.size(), buffer);
+		if (!cppFile.isGood())
+			break;
+	}
+	cppFile.close();
+
+	//------Send h file ----------------------
+	File hFile(uploadDir + "/" + hFileName);
+	hFile.open(File::in, File::binary);
+	if (!hFile.isGood())
+	{
+		si.shutDownSend();
+		return;
+	}
+	while (true)
+	{
+		Block blk = hFile.getBlock(BlockSize);
+		if (blk.size() == 0)
+			break;
+		for (size_t i = 0; i < blk.size(); ++i)
+			buffer[i] = blk[i];
+		si.send(blk.size(), buffer);
+		if (!hFile.isGood())
+			break;
+	}
+	hFile.close();
 }
 
 //-----------Command: GetOpenCheckIns------------------//
 void Sender::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 
 	si.sendString(httpMessage.buildMessage());
 }
@@ -289,13 +356,7 @@ void Sender::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage)
 void Sender::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 
 	si.sendString(httpMessage.buildMessage());
 }
@@ -304,13 +365,7 @@ void Sender::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
 void Sender::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 
 	si.sendString(httpMessage.buildMessage());
 }
@@ -319,14 +374,6 @@ void Sender::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
 
 
 //--------------Client main thread-----------------------------//
-
-using byte = std::string;
-using Name = std::string;
-using Value = std::string;
-using Attribute = std::pair<Name, Value>;
-using Attributes = std::vector<Attribute>;
-using Body = std::vector<byte>;
-using Message = std::string;
 
 int main()
 {
@@ -381,16 +428,11 @@ int main()
 			ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
 			httpMessage.addAttribute(ToAddrAttrib);
 
-			//Body body;						
-			//httpMessage.setBody("someBody");
-
 			//place message to send on the sendQ
 			sendQ.enQ(httpMessage);
 
 			//wait for response
 			HttpMessage response = cp.RecvQ().deQ();
-			//std::cout << "\nResponse recieved for: Command: " << response.findValue("Command");	
-			//do something with the response
 
 		}
 

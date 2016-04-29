@@ -47,6 +47,9 @@ public:
 	Message buildMessage();
 	void parseMessage(const Message& msg);
 
+	//print
+	void printMessage();
+
 private:
 	Attributes attributes_;
 	Body body_;

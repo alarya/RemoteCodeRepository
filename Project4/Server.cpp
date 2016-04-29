@@ -26,11 +26,14 @@
 #include "../HttpMessage/HttpMessage.h"
 #include "../Repository/Repository.h"
 #include "../XMLResponseBodyGenerator/XMLResponseBodyGenerator.h"
+#include "../Utilities/Utilities.h"
+#include "../FileSystem/FileSystem.h"
 #include <string>
 #include <iostream>
 
 using Show = StaticLogger<1>;
-
+using namespace Utilities;
+using namespace FileSystem;
 
 /////////////////////////////////////////////////////////////////////
 // Client handler (Runs on a new thread for every client)
@@ -66,13 +69,7 @@ void ClientHandler::operator()(Socket& socket_)
 		httpMessage.parseMessage(msg);
 		std::string command = httpMessage.findValue("Command");
 		std::cout << "\nMessage Received From Client \n";
-		std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-		std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-		std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-		std::string body;
-		for (auto c : httpMessage.body())
-			body += c;
-		std::cout << "Body: " << body << "\n";
+		httpMessage.printMessage();
 
 		
 		if (command == "GetFiles")
@@ -124,22 +121,71 @@ void ClientHandler::handleGetFiles(Socket& socket_, HttpMessage httpMessage)
 bool ClientHandler::handleCheckIn(Socket& socket_, HttpMessage httpMessage)
 {
 	std::cout << "\nCheck-In File....\n";
-	//making up shit for time being
-	std::string fileName = "package1.cpp";   //client message should provide this in prev message
-	int fileLength = 200;					 //client message should provide this in prev message
-	const size_t bufferLen = 2000;
+
+	string packageName = "Package5";           //will get from httpAttributes
+	size_t cppFileLength = Converter<size_t>::toValue(httpMessage.findValue("cppFileLength"));
+	size_t hFileLength = Converter<size_t>::toValue(httpMessage.findValue("hFileLength"));
+
+	const size_t BlockSize = 2048;
+	const int bufferLen = 2000;
 	char buffer[bufferLen];
-	bool ok = socket_.recv(fileLength, buffer);
-	if (socket_ == INVALID_SOCKET)
-		return false;
-	if (ok)
+
+	//client first sends cpp file: READ IT from socket
+	cout << "CPP FILE: \n";
+	size_t bytesToRead;
+	while (true)
 	{
-		buffer[fileLength] = '\0';
-		std::string fileData(buffer);
-		std::cout << "Client uploaded file \ndata :- \n";
-		std::cout << fileData;
-		std::cout << "\nSize: " << fileData.size();
+		if (cppFileLength > BlockSize)
+			bytesToRead = BlockSize;
+		else bytesToRead = cppFileLength;
+
+		socket_.recv(bytesToRead, buffer);
+
+		if (socket_ == INVALID_SOCKET)
+			return false;
+
+		Block blk;
+		for (size_t i = 0; i < bytesToRead; ++i)
+			blk.push_back(buffer[i]);
+
+		//To:do push block to file
+		cout << blk.size();
+		
+		//-------check if need to read more
+		if (cppFileLength < BlockSize)
+			break;
+		cppFileLength -= BlockSize;
 	}
+	cout << "\n Cpp File received-------------\n";
+
+	//receive the h file
+	cout << "H FILE : \n";
+	while (true)
+	{
+		if (hFileLength > BlockSize)
+			bytesToRead = BlockSize;
+		else bytesToRead = hFileLength;
+
+		socket_.recv(bytesToRead, buffer);
+
+		if (socket_ == INVALID_SOCKET)
+			return false;
+
+		Block blk;
+		for (size_t i = 0; i < bytesToRead; ++i)
+			blk.push_back(buffer[i]);
+
+		//To:do push block to file
+		cout << blk.size();
+
+
+		//-------check if need to read more
+		if (hFileLength < BlockSize)
+			break;
+		hFileLength -= BlockSize;
+	}
+	cout << "\n h File received-------------\n";
+
 	return true;
 }
 

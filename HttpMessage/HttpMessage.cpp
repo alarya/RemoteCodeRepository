@@ -174,8 +174,20 @@ void HttpMessage::parseMessage(const Message& msg)
 	setBody(body);
 }
 
+//-----print the httpMessage--------------------/
+void HttpMessage::printMessage()
+{
+	std::cout << "\n";
+	for (auto attrib : attributes_)
+	{
+		std::cout << attrib.first << " : " << attrib.second << "\n";
+	}
+	std::string bodyString;
+	for (auto c : body() )
+		bodyString += c;
 
-
+	std::cout << "Body: " << bodyString << "\n";
+}
 
 
 #ifdef TEST_HTTPMESSAGE

@@ -3,11 +3,16 @@
 
 
 
+#include "../XmlElement/XmlElement.h"
+#include "../XmlDocument/XmlDocument.h"
+#include"../XmlParser/XmlParser.h"
 #include <iostream>
 #include <map>
 #include <vector>
 
 using namespace std;
+using namespace XmlProcessing;
+using sPtr = std::shared_ptr < AbstractXmlElement >;
 
 struct Package {
 	string name;
@@ -35,9 +40,12 @@ public:
 	string getResponseBodyForGetFiles(vector<Package> packageList);
 	vector<Package> parseResponseBodyForGetFiles(string reponseBody);
 
-	string getRequestBodyForCheckIn(CheckInPackage checkInPackage, vector<Package> dependencies);
+	string getRequestBodyForCheckIn(Package checkInPackage, vector<Package> dependencies);
 	vector<Package> parseRequestBodyForDependenciesInCheckIn(string requestBody);
-	CheckInPackage parseRequestBodyForCheckInPackage(string requestBody);
+	Package parseRequestBodyForCheckInPackage(string requestBody);
+
+private:
+	Package parsePackageElement(sPtr package);
 };
 
 

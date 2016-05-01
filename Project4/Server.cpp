@@ -35,6 +35,57 @@ using Show = StaticLogger<1>;
 using namespace Utilities;
 using namespace FileSystem;
 
+
+
+
+
+
+
+//---------------receive file--------------------------------------//
+bool receiveFile(string fileName, size_t fileLength, Socket& socket_)
+{
+	const size_t BlockSize = 2048;
+	const int bufferLen = 2000;
+	char buffer[bufferLen];
+	
+	//outputfile
+	string socketUploadsDir = "../root/socket_uploads";
+	string filePath = socketUploadsDir + "/" + fileName;
+	File file(filePath);
+	file.open(File::out, File::binary);
+
+	size_t bytesToRead;
+	while (true)
+	{
+		if (fileLength > BlockSize)
+			bytesToRead = BlockSize;
+		else bytesToRead = fileLength;
+
+		socket_.recv(bytesToRead, buffer);
+
+		if (socket_ == INVALID_SOCKET)
+			return false;
+
+		Block blk;
+		for (size_t i = 0; i < bytesToRead; ++i)
+			blk.push_back(buffer[i]);
+
+		//To:do push block to file
+		file.putBlock(blk);
+
+		//-------check if need to read more
+		if (fileLength < BlockSize)
+			break;
+		fileLength -= BlockSize;
+	}
+	file.close();
+}
+
+
+
+
+
+
 /////////////////////////////////////////////////////////////////////
 // Client handler (Runs on a new thread for every client)
 //
@@ -126,64 +177,16 @@ bool ClientHandler::handleCheckIn(Socket& socket_, HttpMessage httpMessage)
 	size_t cppFileLength = Converter<size_t>::toValue(httpMessage.findValue("cppFileLength"));
 	size_t hFileLength = Converter<size_t>::toValue(httpMessage.findValue("hFileLength"));
 
-	const size_t BlockSize = 2048;
-	const int bufferLen = 2000;
-	char buffer[bufferLen];
+
 
 	//client first sends cpp file: READ IT from socket
 	cout << "CPP FILE: \n";
-	size_t bytesToRead;
-	while (true)
-	{
-		if (cppFileLength > BlockSize)
-			bytesToRead = BlockSize;
-		else bytesToRead = cppFileLength;
-
-		socket_.recv(bytesToRead, buffer);
-
-		if (socket_ == INVALID_SOCKET)
-			return false;
-
-		Block blk;
-		for (size_t i = 0; i < bytesToRead; ++i)
-			blk.push_back(buffer[i]);
-
-		//To:do push block to file
-		cout << blk.size();
-		
-		//-------check if need to read more
-		if (cppFileLength < BlockSize)
-			break;
-		cppFileLength -= BlockSize;
-	}
+	receiveFile(packageName + ".cpp", cppFileLength, socket_);
 	cout << "\n Cpp File received-------------\n";
 
 	//receive the h file
 	cout << "H FILE : \n";
-	while (true)
-	{
-		if (hFileLength > BlockSize)
-			bytesToRead = BlockSize;
-		else bytesToRead = hFileLength;
-
-		socket_.recv(bytesToRead, buffer);
-
-		if (socket_ == INVALID_SOCKET)
-			return false;
-
-		Block blk;
-		for (size_t i = 0; i < bytesToRead; ++i)
-			blk.push_back(buffer[i]);
-
-		//To:do push block to file
-		cout << blk.size();
-
-
-		//-------check if need to read more
-		if (hFileLength < BlockSize)
-			break;
-		hFileLength -= BlockSize;
-	}
+	receiveFile(packageName + ".h", hFileLength, socket_);
 	cout << "\n h File received-------------\n";
 
 	return true;

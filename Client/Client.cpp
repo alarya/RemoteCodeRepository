@@ -26,6 +26,7 @@
 #include "../Logger/Cpp11-BlockingQueue.h"
 #include "../XMLResponseBodyGenerator/XMLResponseBodyGenerator.h"
 #include "../FileSystem/FileSystem.h"
+#include "../Client/Client.h"
 #include <string>
 #include <iostream>
 #include <thread>
@@ -47,20 +48,6 @@ using namespace FileSystem;
 // Client handler
 //
 // Runs a different thread for each response
-
-class ClientHandler
-{
-public:
-	void operator()(Socket& socket_);
-	BlockingQueue<HttpMessage>& RecvQ();
-private:	
-	static BlockingQueue<HttpMessage> recvQ;      //shared by all client handlers 
-	void GetFiles(Socket& si, HttpMessage httpMessage);
-	void CheckIn(Socket& si, HttpMessage httpMessage);
-	void GetOpenCheckIns(Socket& si, HttpMessage httpMessage);
-	void CloseOpenCheckIn(Socket& si, HttpMessage httpMessage);
-	void CheckOut(Socket& si, HttpMessage httpMessage);
-};
 
 BlockingQueue<HttpMessage> ClientHandler::recvQ;
 
@@ -187,20 +174,9 @@ void ClientHandler::CheckOut(Socket& si, HttpMessage httpMessage)
 // Send Messages class (Reply to requests)
 // Runs on a seperate thread
 //
-class Sender
-{
-public:
-	void operator()(BlockingQueue<HttpMessage>& sendQ, SocketConnecter& si);
-private:
-	void GetFiles(SocketConnecter& si, HttpMessage httpMessage);
-	void CheckIn(SocketConnecter& si, HttpMessage httpMessage);
-	void GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage);
-	void CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage);
-	void CheckOut(SocketConnecter& si, HttpMessage httpMessage);
-};
 
 //---------------sender thread----------------------------------------------//
-void Sender::operator()(BlockingQueue<HttpMessage>& sendQ,SocketConnecter& si)
+void SenderHandler::operator()(BlockingQueue<HttpMessage>& sendQ,SocketConnecter& si)
 {
 	while (true)
 	{
@@ -242,7 +218,7 @@ void Sender::operator()(BlockingQueue<HttpMessage>& sendQ,SocketConnecter& si)
 #pragma region Sender_Commands
 
 //-------------Command: GetFiles------------------------//
-void Sender::GetFiles(SocketConnecter& si, HttpMessage httpMessage)
+void SenderHandler::GetFiles(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
 	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
@@ -257,7 +233,7 @@ void Sender::GetFiles(SocketConnecter& si, HttpMessage httpMessage)
 }
 
 //------------Command: CheckIn--------------------------//
-void Sender::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
+void SenderHandler::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
 {
 	
 	//mocking checkIn Package and it's dependencies
@@ -344,7 +320,7 @@ void Sender::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
 }
 
 //-----------Command: GetOpenCheckIns------------------//
-void Sender::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage)
+void SenderHandler::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
 	httpMessage.printMessage();
@@ -353,7 +329,7 @@ void Sender::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage)
 }
 
 //----------Command: CloseOpenCheckIn------------------//
-void Sender::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
+void SenderHandler::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
 	httpMessage.printMessage();
@@ -362,7 +338,7 @@ void Sender::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
 }
 
 //----------Command: CheckOut--------------------------//
-void Sender::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
+void SenderHandler::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
 	httpMessage.printMessage();
@@ -373,9 +349,12 @@ void Sender::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
 #pragma endregion
 
 
-//--------------Client main thread-----------------------------//
+//////////////////////////////////////////////////////////////////////////////////
+// Client class
+//
+//
 
-int main()
+void Client::startClient()
 {
 	try
 	{
@@ -384,7 +363,7 @@ int main()
 
 		//-------Initialize socket System library--------------//
 		SocketSystem ss;
-		
+
 		//-------------start Client Listener-------------------//
 		SocketListener sl(8081, Socket::IP6);
 		ClientHandler cp;
@@ -396,11 +375,87 @@ int main()
 		{
 			std::cout << "\n client waiting to connect\n";
 			::Sleep(100);
-		}		
+		}
 
 		//-------start send thread ---------//
-		Sender sender;
-		std::thread sendThread(sender, std::ref(sendQ),std::ref(si));
+		SenderHandler sender;
+		std::thread sendThread(sender, std::ref(sendQ), std::ref(si));
+		sendThread.detach();
+
+		//------Main thread: places request/response to send queue---//
+		while (true)
+		{
+			string command = channelQ.deQ();
+
+			HttpMessage httpMessage;
+
+			//----Add hearders for command,fromAddr, ToAddr----------------------//
+			Attribute commandAttrib;
+			commandAttrib.first = "Command"; commandAttrib.second = command;
+			httpMessage.addAttribute(commandAttrib);
+			Attribute fromAddrAttrib;
+			fromAddrAttrib.first = "FromAddr"; fromAddrAttrib.second = "127.0.0.1:8081";
+			httpMessage.addAttribute(fromAddrAttrib);
+			Attribute ToAddrAttrib;
+			ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
+			httpMessage.addAttribute(ToAddrAttrib);
+
+			//place message to send on the sendQ
+			sendQ.enQ(httpMessage);
+
+			//wait for response
+			HttpMessage response = cp.RecvQ().deQ();
+
+		}
+
+		si.shutDownSend(); //quit command sent as input
+	}
+	catch (std::exception& exc)
+	{
+		Show::write("\n  Exeception caught: ");
+		std::string exMsg = "\n  " + std::string(exc.what()) + "\n\n";
+		Show::write(exMsg);
+	}
+}
+
+string Client::doOperation(string command)
+{
+	
+	channelQ.enQ(command);
+
+	return "command";
+}
+
+#ifdef TEST_CLIENT
+
+
+//--------------Client main thread-----------------------------//
+int main()
+{
+	try
+	{
+		//---------sendQ for communication --------------------//		
+		BlockingQueue<HttpMessage> sendQ;
+
+		//-------Initialize socket System library--------------//
+		SocketSystem ss;
+
+		//-------------start Client Listener-------------------//
+		SocketListener sl(8081, Socket::IP6);
+		ClientHandler cp;
+		sl.start(cp);
+
+		//-------------Connect to server-----//
+		SocketConnecter si;
+		while (!si.connect("localhost", 8080))
+		{
+			std::cout << "\n client waiting to connect\n";
+			::Sleep(100);
+		}
+
+		//-------start send thread ---------//
+		SenderHandler sender;
+		std::thread sendThread(sender, std::ref(sendQ), std::ref(si));
 		sendThread.detach();
 
 		//------Main thread: places request/response to send queue---//
@@ -409,11 +464,11 @@ int main()
 			HttpMessage httpMessage;
 			std::string command;
 			std::cout << "\nEnter a command: ";
-			std::getline(std::cin, command); 
+			std::getline(std::cin, command);
 
 			//don't send anymore commands: quit
 			if (command == "quit")
-			{				
+			{
 				break;
 			}
 
@@ -445,3 +500,7 @@ int main()
 		Show::write(exMsg);
 	}
 }
+
+#endif // TEST_CLIENT
+
+

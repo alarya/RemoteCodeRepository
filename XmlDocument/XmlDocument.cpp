@@ -30,7 +30,7 @@ XmlProcessing::XmlDocument::XmlDocument(const std::string& src, sourceType srcTy
 XmlDocument::XmlDocument(XmlDocument&& doc)
 {
   pDocElement_ = doc.pDocElement_;
-  doc.pDocElement_ = nullptr;
+  doc.pDocElement_ = __nullptr;
 }
 //----< move assignment >----------------------------------------------------
 
@@ -38,7 +38,7 @@ XmlDocument& XmlDocument::operator=(XmlDocument&& doc)
 {
   if (&doc == this) return *this;
   pDocElement_ = doc.pDocElement_;
-  doc.pDocElement_ = nullptr;
+  doc.pDocElement_ = __nullptr;
   return *this;
 }
 //----< return std::shared_ptr to XML root >---------------------------------
@@ -50,7 +50,7 @@ sPtr XmlDocument::xmlRoot()
     if (dynamic_cast<TaggedElement*>(pElem.get()))
       return pElem;
   }
-  return nullptr;
+  return __nullptr;
 }
 //----< add XML root to an XmlDocument >-------------------------------------
 

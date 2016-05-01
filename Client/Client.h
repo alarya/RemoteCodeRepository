@@ -45,9 +45,10 @@ class Client {
 
 public:
 	void startClient();
-	string doOperation(string command) ;
+	HttpMessage doOperation(HttpMessage command) ;
 private:
-	BlockingQueue<string> channelQ;
+	BlockingQueue<HttpMessage> channelSendQ;
+	BlockingQueue<HttpMessage> channelRecvQ;
 };
 
 

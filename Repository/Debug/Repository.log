@@ -1,11 +1,6 @@
-﻿  Repository.cpp
-  MetadataMgr.cpp
-  FileMgr.cpp
-  XmlParser.cpp
-  XmlElement.cpp
-  xmlElementParts.cpp
-  Tokenizer.cpp
-  XmlDocument.cpp
-  FileSystem.cpp
+﻿  FileMgr.cpp
   Generating Code...
+  Skipping... (no relevant changes detected)
+  Repository.cpp
+  MetadataMgr.cpp
   Repository.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\Repository.exe

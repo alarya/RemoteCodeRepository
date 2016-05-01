@@ -41,6 +41,7 @@ public:
 	void setBody(std::string msg);
 	void HttpMessage::setBody(Body& body);
 	Body body();
+	std::string getBody();
 	size_t bodyLength();
 
 	//HttpMessage

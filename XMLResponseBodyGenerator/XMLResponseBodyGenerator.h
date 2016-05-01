@@ -44,6 +44,9 @@ public:
 	vector<Package> parseRequestBodyForDependenciesInCheckIn(string requestBody);
 	Package parseRequestBodyForCheckInPackage(string requestBody);
 
+	string getRequestBodyForCloseCheckIn(Package CloseCheckInPackage);
+	Package parseRequestBodyForCloseCheckInPackage(string requestBody);
+
 private:
 	Package parsePackageElement(sPtr package);
 };

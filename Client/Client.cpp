@@ -44,6 +44,38 @@ using namespace Utilities;
 using namespace FileSystem;
 
 
+
+//----------------Send file----------------------------------------//
+bool sendFile(string filePath, SocketConnecter& si)
+{
+	const size_t BlockSize = 2048;
+	const int bufferLen = 2000;
+	char buffer[bufferLen];
+
+	File file(filePath);
+	file.open(File::in, File::binary);
+	if (!file.isGood())
+	{
+		si.shutDownSend();
+		return false;
+	}
+	while (true)
+	{
+		Block blk = file.getBlock(BlockSize);
+		if (blk.size() == 0)
+			break;
+		for (size_t i = 0; i < blk.size(); ++i)
+			buffer[i] = blk[i];
+		si.send(blk.size(), buffer);
+		if (!file.isGood())
+			break;
+	}
+	file.close();
+
+	return true;
+}
+
+
 /////////////////////////////////////////////////////////////////////
 // Client handler
 //
@@ -272,51 +304,12 @@ void SenderHandler::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
 	/*Server waits for the package files when it sees a Check-In command*/
 	std::cout << "\nSending files to Server..\n";
 
-	const size_t BlockSize = 2048;
-	const int bufferLen = 2000;
-	char buffer[bufferLen];
-
 	//--------Send Cpp file first--------------
-	File cppFile(uploadDir + "/" + cppFileName);
-	cppFile.open(File::in, File::binary);
-	if (!cppFile.isGood())
-	{
-		si.shutDownSend();
-		return;
-	}
-	while (true)
-	{
-		Block blk = cppFile.getBlock(BlockSize);
-		if (blk.size() == 0)
-			break;
-		for (size_t i = 0; i < blk.size(); ++i)
-			buffer[i] = blk[i];
-		si.send(blk.size(), buffer);
-		if (!cppFile.isGood())
-			break;
-	}
-	cppFile.close();
+	sendFile(uploadDir + "/" + cppFileName, si);
+	
 
 	//------Send h file ----------------------
-	File hFile(uploadDir + "/" + hFileName);
-	hFile.open(File::in, File::binary);
-	if (!hFile.isGood())
-	{
-		si.shutDownSend();
-		return;
-	}
-	while (true)
-	{
-		Block blk = hFile.getBlock(BlockSize);
-		if (blk.size() == 0)
-			break;
-		for (size_t i = 0; i < blk.size(); ++i)
-			buffer[i] = blk[i];
-		si.send(blk.size(), buffer);
-		if (!hFile.isGood())
-			break;
-	}
-	hFile.close();
+	sendFile(uploadDir + "/" + hFileName,si);
 }
 
 //-----------Command: GetOpenCheckIns------------------//
@@ -331,6 +324,14 @@ void SenderHandler::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage
 //----------Command: CloseOpenCheckIn------------------//
 void SenderHandler::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
 {
+	//mock - close of open check-In
+	Package closeCheckInPackage;
+	closeCheckInPackage.name = "Package4";
+	closeCheckInPackage.version = "2";
+
+	XMLResponseBodyGenerator xmlResponseBodyGenerator;
+	httpMessage.setBody(xmlResponseBodyGenerator.getRequestBodyForCloseCheckIn(closeCheckInPackage));
+
 	std::cout << "\nSending Message to Server:-\n";
 	httpMessage.printMessage();
 
@@ -384,15 +385,11 @@ void Client::startClient()
 
 		//------Main thread: places request/response to send queue---//
 		while (true)
-		{
-			string command = channelQ.deQ();
+		{			
 
-			HttpMessage httpMessage;
+			HttpMessage httpMessage = channelSendQ.deQ();
 
 			//----Add hearders for command,fromAddr, ToAddr----------------------//
-			Attribute commandAttrib;
-			commandAttrib.first = "Command"; commandAttrib.second = command;
-			httpMessage.addAttribute(commandAttrib);
 			Attribute fromAddrAttrib;
 			fromAddrAttrib.first = "FromAddr"; fromAddrAttrib.second = "127.0.0.1:8081";
 			httpMessage.addAttribute(fromAddrAttrib);
@@ -406,6 +403,8 @@ void Client::startClient()
 			//wait for response
 			HttpMessage response = cp.RecvQ().deQ();
 
+			channelRecvQ.enQ(response);
+
 		}
 
 		si.shutDownSend(); //quit command sent as input
@@ -418,12 +417,14 @@ void Client::startClient()
 	}
 }
 
-string Client::doOperation(string command)
+HttpMessage Client::doOperation(HttpMessage message)
 {
 	
-	channelQ.enQ(command);
+	//enqueue request msg from Client GUI into client queue
+	channelSendQ.enQ(message);
 
-	return "command";
+	//wait for the response from client getting the request processed by the server
+	return channelRecvQ.deQ();
 }
 
 #ifdef TEST_CLIENT
@@ -488,9 +489,7 @@ int main()
 
 			//wait for response
 			HttpMessage response = cp.RecvQ().deQ();
-
 		}
-
 		si.shutDownSend(); //quit command sent as input
 	}
 	catch (std::exception& exc)

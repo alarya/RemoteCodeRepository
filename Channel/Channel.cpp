@@ -8,6 +8,7 @@
 #include "Channel.h"
 #include "../Logger/Cpp11-BlockingQueue.h"
 #include "../Client/Client.h"
+
 #include <string>
 #include <thread>
 #include <iostream>
@@ -21,18 +22,18 @@
 class Sender : public ISender
 {
 public:
-	void postMessage(const Message& msg);
-	BlockingQueue<Message> & queue();
+	void postMessage(const HttpMessage& msg);
+	BlockingQueue<HttpMessage> & queue();
 private:
-	BlockingQueue<Message> sendQ;
+	BlockingQueue<HttpMessage> sendQ;
 };
 
-void Sender::postMessage(const Message& msg)
+void Sender::postMessage(const HttpMessage& msg)
 {
 	sendQ.enQ(msg);
 }
 
-BlockingQueue<Message>& Sender::queue()
+BlockingQueue<HttpMessage>& Sender::queue()
 {
 	return sendQ;
 }
@@ -46,18 +47,18 @@ BlockingQueue<Message>& Sender::queue()
 class Receiver : public IReceiver
 {
 public: 
-	Message getMessage();
-	BlockingQueue<Message>&  queue();
+	HttpMessage getMessage();
+	BlockingQueue<HttpMessage>&  queue();
 private:
-	BlockingQueue<Message> recvQ;
+	BlockingQueue<HttpMessage> recvQ;
 };
 
-Message Receiver::getMessage()
+HttpMessage Receiver::getMessage()
 {
 	return recvQ.deQ();
 }
 
-BlockingQueue<Message>& Receiver::queue()
+BlockingQueue<HttpMessage>& Receiver::queue()
 {
 	return recvQ;
 }
@@ -100,28 +101,28 @@ void Channel::start()
 				return;
 			}
 
-			BlockingQueue<Message>& sendQ = pSender->queue();
-			BlockingQueue<Message>& recvQ = pReceiver->queue();
+			BlockingQueue<HttpMessage>& sendQ = pSender->queue();
+			BlockingQueue<HttpMessage>& recvQ = pReceiver->queue();
 
+
+			//---------Start the client process------------------//
 			Client client;
 			std::thread clientThread([&] {
 				client.startClient();
 			});
 			clientThread.detach();
 
-			////mockshit
-			//sendQ.enQ("GetFiles");
-
 			while (!stop_)
 			{
 				//get message from the GUI
-				Message msg = sendQ.deQ();
+				HttpMessage msg = sendQ.deQ();
 
-				//get work done from client
-				string result = client.doOperation(msg);
+				//get work done from client (enqueues request on client channel receiver queue
+				// and wait for the client response)
+				HttpMessage result = client.doOperation(msg);
 
-				//send back to GUI
-				recvQ.enQ(msg);
+				//send back to GUI 
+				recvQ.enQ(result);
 			}
 
 			std::cout << "\n Client Stopping....\n";

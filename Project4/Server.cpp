@@ -79,6 +79,7 @@ bool receiveFile(string fileName, size_t fileLength, Socket& socket_)
 		fileLength -= BlockSize;
 	}
 	file.close();
+	return true;
 }
 
 
@@ -153,7 +154,7 @@ void ClientHandler::operator()(Socket& socket_)
 			std::cout << "\nCommand not recognized\n";
 		}
 
-		//enq msg on receiveQueue to prepare response
+		//enq msg on receiveQueue for main thread
 		recvQ.enQ(httpMessage);
 	}
 
@@ -165,7 +166,8 @@ void ClientHandler::operator()(Socket& socket_)
 //------------Handle get files request------------//
 void ClientHandler::handleGetFiles(Socket& socket_, HttpMessage httpMessage)
 {
-
+	//No Action required by Client Handler for getFiles command
+	//Main thread fetches the package list from the repository server
 }
 
 //-----------Handle CheckIn requests ------------//
@@ -314,7 +316,7 @@ int main()
 			HttpMessage msg = cp.RecvQ().deQ();
 
 
-			//process from Repository related tasks in main thread
+			//process Repository related tasks in main thread
 			std::string command_ = msg.findValue("Command");
 
 			std::string body;
@@ -324,7 +326,9 @@ int main()
 			}
 			else if (command_ == "Check-In")
 			{
-
+				Package package = xmlResponseBodyGenerator.parseRequestBodyForCheckInPackage(msg.getBody());
+				vector<Package> dependencies = xmlResponseBodyGenerator.parseRequestBodyForDependenciesInCheckIn(msg.getBody());
+				body = repo.checkInPackage(package, dependencies);
 			}
 			else if (command_ == "Check-Out")
 			{
@@ -336,7 +340,8 @@ int main()
 			}
 			else if (command_ == "CloseOpenCheck-In")
 			{
-
+				Package closeCheckInPackage = xmlResponseBodyGenerator.parseRequestBodyForCloseCheckInPackage(msg.getBody());
+				body = repo.closeOpenCheckIn(closeCheckInPackage);
 			}
 
 

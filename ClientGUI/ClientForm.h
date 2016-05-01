@@ -3,7 +3,10 @@
 
 #include "../Channel/Channel.h"
 #include "../HttpMessage/HttpMessage.h"
-
+#include "../XMLResponseBodyGenerator/XMLResponseBodyGenerator.h"
+#include <vector>
+#include <functional>
+#include <iostream>
 
 namespace ClientGUI {
 
@@ -22,7 +25,10 @@ namespace ClientGUI {
 
 		ISender* pSender;
 		IReceiver* pReceiver;
-		IChannel* pChannel;
+	private: System::Windows::Forms::Label^  label7;
+	private: System::Windows::Forms::Button^  button2;
+	private: System::Windows::Forms::Label^  label6;
+			 IChannel* pChannel;
 
 	public:
 		ClientForm(void)
@@ -64,7 +70,7 @@ namespace ClientGUI {
 	private: System::Windows::Forms::TabPage^  tabPage2;
 	private: System::Windows::Forms::Panel^  panel2;
 	private: System::Windows::Forms::Label^  label4;
-	private: System::Windows::Forms::Label^  label3;
+
 	private: System::Windows::Forms::TextBox^  textBox1;
 	private: System::Windows::Forms::Label^  label2;
 	private: System::IO::FileSystemWatcher^  fileSystemWatcher1;
@@ -94,6 +100,9 @@ namespace ClientGUI {
 			this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 			this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
 			this->panel1 = (gcnew System::Windows::Forms::Panel());
+			this->label7 = (gcnew System::Windows::Forms::Label());
+			this->button2 = (gcnew System::Windows::Forms::Button());
+			this->label6 = (gcnew System::Windows::Forms::Label());
 			this->button4 = (gcnew System::Windows::Forms::Button());
 			this->button3 = (gcnew System::Windows::Forms::Button());
 			this->button1 = (gcnew System::Windows::Forms::Button());
@@ -101,7 +110,6 @@ namespace ClientGUI {
 			this->label5 = (gcnew System::Windows::Forms::Label());
 			this->textBox2 = (gcnew System::Windows::Forms::TextBox());
 			this->label4 = (gcnew System::Windows::Forms::Label());
-			this->label3 = (gcnew System::Windows::Forms::Label());
 			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
 			this->label2 = (gcnew System::Windows::Forms::Label());
 			this->label1 = (gcnew System::Windows::Forms::Label());
@@ -142,6 +150,9 @@ namespace ClientGUI {
 			// 
 			// panel1
 			// 
+			this->panel1->Controls->Add(this->label7);
+			this->panel1->Controls->Add(this->button2);
+			this->panel1->Controls->Add(this->label6);
 			this->panel1->Controls->Add(this->button4);
 			this->panel1->Controls->Add(this->button3);
 			this->panel1->Controls->Add(this->button1);
@@ -149,7 +160,6 @@ namespace ClientGUI {
 			this->panel1->Controls->Add(this->label5);
 			this->panel1->Controls->Add(this->textBox2);
 			this->panel1->Controls->Add(this->label4);
-			this->panel1->Controls->Add(this->label3);
 			this->panel1->Controls->Add(this->textBox1);
 			this->panel1->Controls->Add(this->label2);
 			this->panel1->Controls->Add(this->label1);
@@ -158,7 +168,36 @@ namespace ClientGUI {
 			this->panel1->Name = L"panel1";
 			this->panel1->Size = System::Drawing::Size(658, 388);
 			this->panel1->TabIndex = 0;
-			
+			// 
+			// label7
+			// 
+			this->label7->AutoSize = true;
+			this->label7->Location = System::Drawing::Point(22, 339);
+			this->label7->Name = L"label7";
+			this->label7->Size = System::Drawing::Size(207, 13);
+			this->label7->TabIndex = 14;
+			this->label7->Text = L"Select Depedencies of Check-In Package";
+			// 
+			// button2
+			// 
+			this->button2->Location = System::Drawing::Point(111, 53);
+			this->button2->Name = L"button2";
+			this->button2->Size = System::Drawing::Size(118, 23);
+			this->button2->TabIndex = 13;
+			this->button2->Text = L"Get Packages";
+			this->button2->UseVisualStyleBackColor = true;
+			this->button2->Click += gcnew System::EventHandler(this, &ClientForm::button2_Click);
+			// 
+			// label6
+			// 
+			this->label6->AutoSize = true;
+			this->label6->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 14, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
+			this->label6->Location = System::Drawing::Point(298, 25);
+			this->label6->Name = L"label6";
+			this->label6->Size = System::Drawing::Size(99, 24);
+			this->label6->TabIndex = 12;
+			this->label6->Text = L"CHECK-IN";
 			// 
 			// button4
 			// 
@@ -182,7 +221,7 @@ namespace ClientGUI {
 			// 
 			// button1
 			// 
-			this->button1->Location = System::Drawing::Point(408, 290);
+			this->button1->Location = System::Drawing::Point(481, 329);
 			this->button1->Name = L"button1";
 			this->button1->Size = System::Drawing::Size(75, 23);
 			this->button1->TabIndex = 9;
@@ -222,18 +261,9 @@ namespace ClientGUI {
 			this->label4->TabIndex = 5;
 			this->label4->Text = L"CppFilePath";
 			// 
-			// label3
-			// 
-			this->label3->AutoSize = true;
-			this->label3->Location = System::Drawing::Point(0, 0);
-			this->label3->Name = L"label3";
-			this->label3->Size = System::Drawing::Size(35, 13);
-			this->label3->TabIndex = 4;
-			this->label3->Text = L"label3";
-			// 
 			// textBox1
 			// 
-			this->textBox1->Location = System::Drawing::Point(347, 93);
+			this->textBox1->Location = System::Drawing::Point(347, 90);
 			this->textBox1->Name = L"textBox1";
 			this->textBox1->Size = System::Drawing::Size(120, 20);
 			this->textBox1->TabIndex = 3;
@@ -241,7 +271,7 @@ namespace ClientGUI {
 			// label2
 			// 
 			this->label2->AutoSize = true;
-			this->label2->Location = System::Drawing::Point(256, 100);
+			this->label2->Location = System::Drawing::Point(255, 97);
 			this->label2->Name = L"label2";
 			this->label2->Size = System::Drawing::Size(81, 13);
 			this->label2->TabIndex = 2;
@@ -250,7 +280,7 @@ namespace ClientGUI {
 			// label1
 			// 
 			this->label1->AutoSize = true;
-			this->label1->Location = System::Drawing::Point(33, 31);
+			this->label1->Location = System::Drawing::Point(16, 58);
 			this->label1->Name = L"label1";
 			this->label1->Size = System::Drawing::Size(89, 13);
 			this->label1->TabIndex = 1;
@@ -260,9 +290,9 @@ namespace ClientGUI {
 			// listBox1
 			// 
 			this->listBox1->FormattingEnabled = true;
-			this->listBox1->Location = System::Drawing::Point(36, 47);
+			this->listBox1->Location = System::Drawing::Point(19, 90);
 			this->listBox1->Name = L"listBox1";
-			this->listBox1->Size = System::Drawing::Size(193, 277);
+			this->listBox1->Size = System::Drawing::Size(210, 238);
 			this->listBox1->TabIndex = 0;
 			// 
 			// tabPage2
@@ -369,16 +399,45 @@ namespace ClientGUI {
 
 	private: System::Void tabControl1_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e)
 	{
-		if (tabControl1->SelectedTab == tabControl1->TabPages["tabPage1"])
-		{
-			pSender->postMessage("GetFiles");
-
-			System::String^ response = gcnew String(pReceiver->getMessage().c_str());
-
-			listBox1->Items->Add(response);
-		}
-		
+		//if (tabControl1->SelectedTab == tabControl1->TabPages["tabPage1"])
+		//{
+		//	
+		//}		
 	}
+
+	private: System::Void tabPage1_Load(System::Object^ sender, System::EventArgs^ e)
+	{
+
+	}
+	
+	//------------get Server packages (Check-In tab)----------------------------------//
+	private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) 	
+	{
+		listBox1->Items->Clear();
+
+		HttpMessage msg;
+		HttpMessage::Attribute attr;
+		attr.first = "Command"; attr.second = "GetFiles";
+		msg.addAttribute(attr);
+
+		pSender->postMessage(msg);
+
+		//currently blocking on the response
+		HttpMessage response = pReceiver->getMessage();
+
+		XMLResponseBodyGenerator xmlMgr;
+		std::vector<Package> packages = xmlMgr.parseResponseBodyForGetFiles(response.getBody());
+
+		for (auto package : packages)
+		{
+			std::string packagNameVer = package.name + "_" + package.version;
+			System::String^ pack = gcnew String(packagNameVer.c_str());
+
+			listBox1->Items->Add(pack);
+		}
+	}
+	
+
 };
 
 } //end of namespace

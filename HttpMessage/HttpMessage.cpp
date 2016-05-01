@@ -189,6 +189,14 @@ void HttpMessage::printMessage()
 	std::cout << "Body: " << bodyString << "\n";
 }
 
+std::string HttpMessage::getBody()
+{
+	std::string bodyString;
+	for (auto c : body())
+		bodyString += c;
+
+	return bodyString;
+}
 
 #ifdef TEST_HTTPMESSAGE
 

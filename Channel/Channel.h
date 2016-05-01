@@ -11,17 +11,16 @@
 #endif
 
 #include <string>
-
-using Message = std::string;
+#include "../HttpMessage/HttpMessage.h"
 
 struct ISender
 {
-	virtual	void postMessage(const Message& msg) = 0;
+	virtual	void postMessage(const HttpMessage& msg) = 0;
 };
 
 struct IReceiver
 {
-	virtual Message getMessage() = 0;
+	virtual HttpMessage getMessage() = 0;
 };
 
 struct IChannel

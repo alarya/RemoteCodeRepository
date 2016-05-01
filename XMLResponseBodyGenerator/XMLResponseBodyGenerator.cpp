@@ -166,6 +166,64 @@ Package XMLResponseBodyGenerator::parseRequestBodyForCheckInPackage(string reque
 #pragma endregion
 
 
+
+#pragma region CloseCheckIn
+
+string XMLResponseBodyGenerator::getRequestBodyForCloseCheckIn(Package checkInPackage)
+{
+	sPtr pRoot = makeTaggedElement("CloseCheck-In");
+	XmlDocument doc(XmlProcessing::makeDocElement(pRoot));
+	sPtr package = makeTaggedElement("package");
+	sPtr packageName = makeTaggedElement("name");
+	packageName->addChild(makeTextElement(checkInPackage.name));
+	package->addChild(packageName);
+	sPtr packageCppLength = makeTaggedElement("version");
+	packageCppLength->addChild(makeTextElement(checkInPackage.version));
+	package->addChild(packageCppLength);
+	sPtr packageHLength = makeTaggedElement("status");
+	packageHLength->addChild(makeTextElement(checkInPackage.status));
+	package->addChild(packageHLength);
+	pRoot->addChild(package);
+
+	return doc.toString();
+}
+
+Package XMLResponseBodyGenerator::parseRequestBodyForCloseCheckInPackage(string requestBody)
+{
+	Package CloseCheckInPackage;
+	XmlDocument doc(requestBody);
+	vector<sPtr> package = doc.element("package").select();
+	sPtr package_ = package[0];
+
+	for (auto packageInfo : package_->children())
+	{
+		if (packageInfo->tag() == "name")
+		{
+			vector<sPtr> packageInfoName = packageInfo->children();
+			for (auto child : packageInfoName)
+				CloseCheckInPackage.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "version")
+		{
+			vector<sPtr> packageInfoVersion = packageInfo->children();
+			for (auto child : packageInfoVersion)
+				CloseCheckInPackage.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "status")
+		{
+			vector<sPtr> packageInfoStatus = packageInfo->children();
+			for (auto child : packageInfoStatus)
+				CloseCheckInPackage.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+	}
+
+	return CloseCheckInPackage;
+}
+
+#pragma endregion
+
+
+
 Package XMLResponseBodyGenerator::parsePackageElement(sPtr package)
 {
 	Package package_;

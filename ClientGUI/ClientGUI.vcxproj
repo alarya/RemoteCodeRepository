@@ -141,12 +141,27 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\HttpMessage\HttpMessage.h" />
+    <ClInclude Include="..\XmlDocument\XmlDocument.h" />
+    <ClInclude Include="..\XmlElementParts\itokcollection.h" />
+    <ClInclude Include="..\XmlElementParts\Tokenizer.h" />
+    <ClInclude Include="..\XmlElementParts\xmlElementParts.h" />
+    <ClInclude Include="..\XmlElement\XmlElement.h" />
+    <ClInclude Include="..\XmlParser\XmlParser.h" />
+    <ClInclude Include="..\XMLResponseBodyGenerator\XMLResponseBodyGenerator.h" />
     <ClInclude Include="ClientForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\HttpMessage\HttpMessage.cpp" />
+    <ClCompile Include="..\XmlDocument\XmlDocument.cpp" />
+    <ClCompile Include="..\XmlElementParts\Tokenizer.cpp" />
+    <ClCompile Include="..\XmlElementParts\xmlElementParts.cpp" />
+    <ClCompile Include="..\XmlElement\XmlElement.cpp" />
+    <ClCompile Include="..\XmlParser\XmlParser.cpp" />
+    <ClCompile Include="..\XMLResponseBodyGenerator\XMLResponseBodyGenerator.cpp" />
     <ClCompile Include="ClientForm.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
@@ -154,6 +169,14 @@
     <EmbeddedResource Include="ClientForm.resx">
       <DependentUpon>ClientForm.h</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HttpMessage\HttpMessage.vcxproj">
+      <Project>{dc8cea6a-da41-4492-90e7-f1133f05ad20}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\XMLResponseBodyGenerator\XMLResponseBodyGenerator.vcxproj">
+      <Project>{1bed84b8-49bd-493c-ba40-ca9721091e91}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\Debug\Channel.lib" />

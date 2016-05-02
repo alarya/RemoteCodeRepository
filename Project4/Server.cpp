@@ -35,11 +35,48 @@ using Show = StaticLogger<1>;
 using namespace Utilities;
 using namespace FileSystem;
 
+using byte = std::string;
+using Name = std::string;
+using Value = std::string;
+using Attribute = std::pair<Name, Value>;
+using Attributes = std::vector<Attribute>;
+using Body = std::vector<byte>;
+using Message = std::string;
 
 
 
 
+#pragma region FileTransferFunctions
 
+//----------------Send file----------------------------------------//
+bool sendFile(string filePath, SocketConnecter& si)
+{
+	const size_t BlockSize = 2048;
+	const int bufferLen = 2000;
+	char buffer[bufferLen];
+
+	File file(filePath);
+	file.open(File::in, File::binary);
+	if (!file.isGood())
+	{
+		si.shutDownSend();
+		return false;
+	}
+	while (true)
+	{
+		Block blk = file.getBlock(BlockSize);
+		if (blk.size() == 0)
+			break;
+		for (size_t i = 0; i < blk.size(); ++i)
+			buffer[i] = blk[i];
+		si.send(blk.size(), buffer);
+		if (!file.isGood())
+			break;
+	}
+	file.close();
+
+	return true;
+}
 
 //---------------receive file--------------------------------------//
 bool receiveFile(string fileName, size_t fileLength, Socket& socket_)
@@ -82,7 +119,7 @@ bool receiveFile(string fileName, size_t fileLength, Socket& socket_)
 	return true;
 }
 
-
+#pragma endregion
 
 
 
@@ -198,18 +235,24 @@ bool ClientHandler::handleCheckIn(Socket& socket_, HttpMessage httpMessage)
 void ClientHandler::handleCheckOut(Socket& socket_, HttpMessage httpMessage)
 {
 	std::cout << "\nCheck-Out File....\n";
+	//No Action required by Client Handler for checkout command
+	//Main thread fetches the package list from the repository server
 }
 
 //-------Handle Get Open check Ins request-------//
 void ClientHandler::handleGetOpenCheckIn(Socket& socket_, HttpMessage httpMessage)
 {
-
+	std::cout << "\nGet Open Check-In ....\n";
+	//No Action required by Client Handler for GetOpenCheckIn command
+	//Main thread fetches the package list from the repository server
 }
 
 //-------Handler Close open check In request------//
 void ClientHandler::handleCloseOpenCheckIn(Socket& socket_, HttpMessage httpMessage)
 {
-
+	std::cout << "\nClose Open Check-In ....\n";
+	//No Action required by Client Handler for CloseOpenCheckIn command
+	//Main thread fetches the package list from the repository server
 }
 
 BlockingQueue<HttpMessage>& ClientHandler::RecvQ()
@@ -227,6 +270,8 @@ class Sender
 {
 public:
 	void operator()(BlockingQueue<HttpMessage>& sendQ);
+private:
+	void sendCheckOutFiles(SocketConnecter& si, HttpMessage response);
 };
 
 void Sender::operator()(BlockingQueue<HttpMessage>& sendQ)
@@ -245,44 +290,73 @@ void Sender::operator()(BlockingQueue<HttpMessage>& sendQ)
 			std::cout << "\n Server waiting to connect to client\n";
 			::Sleep(100);
 		}
-		si.sendString(response.buildMessage());
+		
+		std::string command = response.findValue("Command");
 
-		//si.shutDownSend();
-
-		//si.close();
-
-		//------check if file transfer needed--------
-		//HttpMessage httpMessage;
-		//httpMessage.parseMessage(msg);
-		//if (httpMessage.findValue("Command") == "Check-In")
-		//{
-		//	std::cout << "\nSending file to Server..\n";
-		//	//mocking fileTransfer
-		//	const int bufferLen = 2000;   //mocking for now, ideally previous message will send file length
-		//	std::size_t fileLength = 200;
-		//	char buffer[bufferLen];
-		//	for (int i = 0; i < 200; i++)
-		//		buffer[i] = 'a';
-
-		//	si.send(fileLength, buffer);
-		//}
-		//------------------------------------------
-
+		if (command == "Check-Out")
+		{
+			sendCheckOutFiles(si, response);
+		}
+		else
+		{
+			si.sendString(response.buildMessage());
+		}	
 	}
 }
 
+void Sender::sendCheckOutFiles(SocketConnecter& si, HttpMessage response)
+{
+	XMLResponseBodyGenerator xml;
 
+	Package checkOutPackage = xml.parseRequestBodyForCheckOutPackage(response.getBody());
+	vector<Package> dependencies = xml.parseRequestBodyForDependenciesInCheckOut(response.getBody());
 
-using byte = std::string;
-using Name = std::string;
-using Value = std::string;
-using Attribute = std::pair<Name, Value>;
-using Attributes = std::vector<Attribute>;
-using Body = std::vector<byte>;
-using Message = std::string;
+	vector<string> filePaths;
+	
+	string packageDirBase = "../root";
 
+	//add attributes to send message to client telling about each file size to be sent by server
+	Attribute attrCheckOutPackageCppLength;
+	attrCheckOutPackageCppLength.first = checkOutPackage.name + "_" + checkOutPackage.version + "_" + "cpp_Length";
+	FileInfo fileCppInfo(packageDirBase + "/" + checkOutPackage.name + "_" + checkOutPackage.version + "/" + checkOutPackage.name + ".cpp");
+	attrCheckOutPackageCppLength.second = std::to_string(fileCppInfo.size());
+	response.addAttribute(attrCheckOutPackageCppLength);
+	Attribute attrCheckOutPackageHLength;
+	attrCheckOutPackageHLength.first = checkOutPackage.name + "_" + checkOutPackage.version + "_" + "h_Length";
+	FileInfo fileHInfo(packageDirBase + "/" + checkOutPackage.name + "_" + checkOutPackage.version + "/" + checkOutPackage.name + ".h");
+	attrCheckOutPackageHLength.second = std::to_string(fileHInfo.size());
+	response.addAttribute(attrCheckOutPackageHLength);
+
+	for (auto dep : dependencies)
+	{
+		Attribute attrDepPackageCppLength;
+		attrDepPackageCppLength.first = dep.name + "_" + dep.version + "_" + "cpp_Length";
+		FileInfo fileCppInfo(packageDirBase + "/" + dep.name + "_" + dep.version + "/" + dep.name + ".cpp");
+		attrDepPackageCppLength.second = std::to_string(fileCppInfo.size());
+		response.addAttribute(attrDepPackageCppLength);
+		Attribute attrDepPackageHLength;
+		attrDepPackageHLength.first = dep.name + "_" + dep.version + "_" + "h_Length";
+		FileInfo fileHInfo(packageDirBase + "/" + dep.name + "_" + dep.version + "/" + dep.name + ".h");
+		attrDepPackageHLength.second = std::to_string(fileHInfo.size());
+		response.addAttribute(attrDepPackageHLength);
+	}
+
+	si.sendString(response.buildMessage()); // first this message is sent to prepare client for receiving approriate files
+
+	//send check out package first
+	sendFile(packageDirBase + "/" + checkOutPackage.name + "_" + checkOutPackage.version + "/" + checkOutPackage.name + ".cpp",si);
+	sendFile(packageDirBase + "/" + checkOutPackage.name + "_" + checkOutPackage.version + "/" + checkOutPackage.name + ".h", si);
+
+	//send dependencies
+	for (auto dep : dependencies)
+	{
+		sendFile(packageDirBase + "/" + dep.name + "_" + dep.version + "/" + dep.name + ".cpp", si);
+		sendFile(packageDirBase + "/" + dep.name + "_" + dep.version + "/" + dep.name + ".h", si);
+	}
+}
 
 //----< Server main thread >--------------------------------------------------
+
 int main()
 {
 	Show::attach(&std::cout);
@@ -332,7 +406,16 @@ int main()
 			}
 			else if (command_ == "Check-Out")
 			{
-		
+				Package package = xmlResponseBodyGenerator.parseRequestBodyForCheckOutPackage(msg.getBody());
+
+				bool includeDependencies;
+				if (msg.findValue("includeDependencies") == "true")
+					includeDependencies = true;
+				else
+					includeDependencies = false;
+
+				vector<Package> dependencies = repo.checkOutPackageDependencies(package,includeDependencies);
+				body = xmlResponseBodyGenerator.getRequestBodyforCheckOut(package, dependencies);
 			}
 			else if (command_ == "GetOpenCheck-In")
 			{

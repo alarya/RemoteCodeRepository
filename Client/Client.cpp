@@ -45,6 +45,8 @@ using namespace FileSystem;
 
 
 
+#pragma region FileTransferFunctions
+
 //----------------Send file----------------------------------------//
 bool sendFile(string filePath, SocketConnecter& si)
 {
@@ -74,6 +76,50 @@ bool sendFile(string filePath, SocketConnecter& si)
 
 	return true;
 }
+
+//---------------receive file--------------------------------------//
+bool receiveFile(string fileName, size_t fileLength, Socket& socket_)
+{
+	const size_t BlockSize = 2048;
+	const int bufferLen = 2000;
+	char buffer[bufferLen];
+
+	//outputfile
+	string clientDownloadsDir = "../clientFolder/downloads";
+	string filePath = clientDownloadsDir + "/" + fileName;
+	File file(filePath);
+	file.open(File::out, File::binary);
+
+	size_t bytesToRead;
+	while (true)
+	{
+		if (fileLength > BlockSize)
+			bytesToRead = BlockSize;
+		else bytesToRead = fileLength;
+
+		socket_.recv(bytesToRead, buffer);
+
+		if (socket_ == INVALID_SOCKET)
+			return false;
+
+		Block blk;
+		for (size_t i = 0; i < bytesToRead; ++i)
+			blk.push_back(buffer[i]);
+
+		//To:do push block to file
+		file.putBlock(blk);
+
+		//-------check if need to read more
+		if (fileLength < BlockSize)
+			break;
+		fileLength -= BlockSize;
+	}
+	file.close();
+	return true;
+}
+
+#pragma endregion
+
 
 
 /////////////////////////////////////////////////////////////////////
@@ -138,62 +184,61 @@ BlockingQueue<HttpMessage>& ClientHandler::RecvQ() {
 void ClientHandler::GetFiles(Socket& si, HttpMessage httpMessage)
 {
 	std::cout << "\nResponse recieved:- \n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 
 }
 
 void ClientHandler::CheckIn(Socket& si, HttpMessage httpMessage)
 {
 	std::cout << "\nResponse recieved:- \n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 }
 
 void ClientHandler::GetOpenCheckIns(Socket& si, HttpMessage httpMessage)
 {
 	std::cout << "\nResponse recieved:- \n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 }
 
 void ClientHandler::CloseOpenCheckIn(Socket& si, HttpMessage httpMessage)
 {
 	std::cout << "\nResponse recieved:- \n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 }
 
 void ClientHandler::CheckOut(Socket& si, HttpMessage httpMessage)
 {
 	std::cout << "\nResponse recieved:- \n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
+
+	XMLResponseBodyGenerator xml;
+
+	Package checkOutPackage = xml.parseRequestBodyForCheckOutPackage(httpMessage.getBody());
+	vector<Package> dependencies = xml.parseRequestBodyForDependenciesInCheckOut(httpMessage.getBody());
+
+	//receive Check-Out Package
+	string checkOutPackageCppFile = checkOutPackage.name + ".cpp";
+	string checkOutPackageHFile = checkOutPackage.name + ".h";
+	size_t checkOutPackageCppLength = Converter<size_t>::toValue(httpMessage.findValue(checkOutPackage.name + "_" + checkOutPackage.version + "_cpp_Length"));
+	size_t checkOutPackageHLength = Converter<size_t>::toValue(httpMessage.findValue(checkOutPackage.name + "_" + checkOutPackage.version + "_h_Length"));
+
+	receiveFile(checkOutPackageCppFile, checkOutPackageCppLength, si);
+	receiveFile(checkOutPackageHFile, checkOutPackageHLength, si);
+	cout << "\n Package: " << checkOutPackage.name + "_" + checkOutPackage.version << " received \n";
+	//receive Dependencies if any
+	for (auto dep : dependencies)
+	{
+		string depPackageCppFile = dep.name + ".cpp";
+		string depPackageHFile = dep.name + ".h";
+		size_t depPackageCppLength = Converter<size_t>::toValue(httpMessage.findValue(dep.name + "_" + dep.version + "_cpp_Length"));
+		size_t depPackageHLength = Converter<size_t>::toValue(httpMessage.findValue(dep.name + "_" + dep.version + "_h_Length"));
+
+		receiveFile(depPackageCppFile, depPackageCppLength, si);
+		receiveFile(depPackageHFile, depPackageHLength, si);
+
+		cout << "\n Package: " << dep.name + "_" + dep.version << " received \n";
+	}
+
 }
 
 #pragma endregion
@@ -342,6 +387,16 @@ void SenderHandler::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessag
 void SenderHandler::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
+	Package checkOutPackage;
+	checkOutPackage.name = "Package2" ; checkOutPackage.version = "1";
+	vector<Package> dependencies;  //will send empty dependencies, server will find out the dependencies
+	XMLResponseBodyGenerator xmlResponseBodyGenerator;
+	httpMessage.setBody(xmlResponseBodyGenerator.getRequestBodyforCheckOut(checkOutPackage, dependencies));
+
+	Attribute includeDependencies;
+	includeDependencies.first = "includeDependencies"; includeDependencies.second = "true";
+	httpMessage.addAttribute(includeDependencies);
+
 	httpMessage.printMessage();
 
 	si.sendString(httpMessage.buildMessage());

@@ -222,7 +222,95 @@ Package XMLResponseBodyGenerator::parseRequestBodyForCloseCheckInPackage(string 
 
 #pragma endregion
 
+#pragma region Check-Out
 
+string XMLResponseBodyGenerator::getRequestBodyforCheckOut(Package checkOutPackage,vector<Package> dependencies)
+{
+	sPtr pRoot = makeTaggedElement("Check-Out");
+	XmlDocument doc(XmlProcessing::makeDocElement(pRoot));
+	sPtr package = makeTaggedElement("package");
+	sPtr packageName = makeTaggedElement("name");
+	packageName->addChild(makeTextElement(checkOutPackage.name));
+	package->addChild(packageName);
+	sPtr packageCppLength = makeTaggedElement("version");
+	packageCppLength->addChild(makeTextElement(checkOutPackage.version));
+	package->addChild(packageCppLength);
+	sPtr packageHLength = makeTaggedElement("status");
+	packageHLength->addChild(makeTextElement(checkOutPackage.status));
+	package->addChild(packageHLength);
+	pRoot->addChild(package);
+
+	sPtr dependencies_ = makeTaggedElement("dependencies");
+	for (auto dep : dependencies)
+	{
+		sPtr depPackage = makeTaggedElement("package");
+		sPtr depPackageName = makeTaggedElement("name");
+		depPackageName->addChild(makeTextElement(dep.name));
+		depPackage->addChild(depPackageName);
+		sPtr depPackageVersion = makeTaggedElement("version");
+		depPackageVersion->addChild(makeTextElement(dep.version));
+		depPackage->addChild(depPackageVersion);
+		sPtr depPackageStatus = makeTaggedElement("status");
+		depPackageStatus->addChild(makeTextElement(dep.status));
+		depPackage->addChild(depPackageStatus);
+		dependencies_->addChild(depPackage);
+	}
+	pRoot->addChild(dependencies_);
+
+	return doc.toString();
+}
+
+vector<Package> XMLResponseBodyGenerator::parseRequestBodyForDependenciesInCheckOut(string requestBody)
+{
+	vector<Package> dependencyPackages;
+	XmlDocument doc(requestBody);
+	vector<sPtr>  dependencies = doc.element("dependencies").descendents().select();
+	if (dependencies.size() > 0)
+	{
+		for (auto package : dependencies)
+		{
+			Package package_ = parsePackageElement(package);
+			if (package_.name != "")
+				dependencyPackages.push_back(package_);
+		}
+	}
+	return dependencyPackages;
+}
+
+Package XMLResponseBodyGenerator::parseRequestBodyForCheckOutPackage(string requestBody)
+{
+	Package checkOutPackage;
+	XmlDocument doc(requestBody);
+	vector<sPtr> package = doc.element("package").select();
+	sPtr package_ = package[0];
+
+	for (auto packageInfo : package_->children())
+	{
+		if (packageInfo->tag() == "name")
+		{
+			vector<sPtr> packageInfoName = packageInfo->children();
+			for (auto child : packageInfoName)
+				checkOutPackage.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "version")
+		{
+			vector<sPtr> packageInfoVersion = packageInfo->children();
+			for (auto child : packageInfoVersion)
+				checkOutPackage.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "status")
+		{
+			vector<sPtr> packageInfoStatus = packageInfo->children();
+			for (auto child : packageInfoStatus)
+				checkOutPackage.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+	}
+
+	return checkOutPackage;
+}
+
+
+#pragma endregion
 
 Package XMLResponseBodyGenerator::parsePackageElement(sPtr package)
 {

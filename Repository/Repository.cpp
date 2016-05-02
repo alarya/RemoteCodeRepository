@@ -172,15 +172,13 @@ PackageList Repository::getOpenCheckIns()
 #pragma region Check-OutPackage
 
 //----------returns a list of file path needed to be check-Out a package----------//
-vector<string> Repository::checkOutPackage(Package package, bool includeDependencies)
+PackageList Repository::checkOutPackageDependencies(Package package, bool includeDependencies)
 {
-	vector<string> filePaths;
+	PackageList packages;
 	FileMgr fileMgr;
 
-	string pathCppFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".cpp");
-	string pathHFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".h");
-	filePaths.push_back(pathCppFile);
-	filePaths.push_back(pathHFile);
+	//string pathCppFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".cpp");
+	//string pathHFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".h");
 
 	if (includeDependencies)
 	{
@@ -191,14 +189,11 @@ vector<string> Repository::checkOutPackage(Package package, bool includeDependen
 
 		for (auto package_ : (*packagesAndDependencies)[package])
 		{
-			string pathCppFile = fileMgr.getFileSpec(packageDirPath + "/" + package_.name + "_" + package_.version + "/" + package_.name + ".cpp");
-			string pathHFile = fileMgr.getFileSpec(packageDirPath + "/" + package_.name + "_" + package_.version + "/" + package_.name + ".h");
-			filePaths.push_back(pathCppFile);
-			filePaths.push_back(pathHFile);
+			packages.push_back(package_);
 		}
 	}
 
-	return filePaths;
+	return packages;
 }
 
 #pragma endregion

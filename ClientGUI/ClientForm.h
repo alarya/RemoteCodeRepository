@@ -4,6 +4,7 @@
 #include "../Channel/Channel.h"
 #include "../HttpMessage/HttpMessage.h"
 #include "../XMLResponseBodyGenerator/XMLResponseBodyGenerator.h"
+#include <msclr\marshal_cppstd.h>
 #include <vector>
 #include <functional>
 #include <iostream>
@@ -16,6 +17,7 @@ namespace ClientGUI {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace msclr::interop;
 
 	/// <summary>
 	/// Summary for ClientForm
@@ -28,6 +30,21 @@ namespace ClientGUI {
 	private: System::Windows::Forms::Label^  label7;
 	private: System::Windows::Forms::Button^  button2;
 	private: System::Windows::Forms::Label^  label6;
+	private: System::Windows::Forms::Label^  label3;
+	private: System::Windows::Forms::Button^  button6;
+	private: System::Windows::Forms::Button^  button5;
+	private: System::Windows::Forms::Label^  label9;
+	private: System::Windows::Forms::ListBox^  listBox2;
+	private: System::Windows::Forms::Label^  label8;
+	private: System::Windows::Forms::TabPage^  tabPage3;
+	private: System::Windows::Forms::Label^  label10;
+	private: System::Windows::Forms::Label^  label13;
+	private: System::Windows::Forms::Button^  button8;
+	private: System::Windows::Forms::CheckBox^  checkBox1;
+	private: System::Windows::Forms::Button^  button7;
+	private: System::Windows::Forms::Label^  label12;
+	private: System::Windows::Forms::ListBox^  listBox3;
+	private: System::Windows::Forms::Label^  label11;
 			 IChannel* pChannel;
 
 	public:
@@ -100,6 +117,7 @@ namespace ClientGUI {
 			this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 			this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
 			this->panel1 = (gcnew System::Windows::Forms::Panel());
+			this->label3 = (gcnew System::Windows::Forms::Label());
 			this->label7 = (gcnew System::Windows::Forms::Label());
 			this->button2 = (gcnew System::Windows::Forms::Button());
 			this->label6 = (gcnew System::Windows::Forms::Label());
@@ -116,6 +134,20 @@ namespace ClientGUI {
 			this->listBox1 = (gcnew System::Windows::Forms::ListBox());
 			this->tabPage2 = (gcnew System::Windows::Forms::TabPage());
 			this->panel2 = (gcnew System::Windows::Forms::Panel());
+			this->label10 = (gcnew System::Windows::Forms::Label());
+			this->button6 = (gcnew System::Windows::Forms::Button());
+			this->button5 = (gcnew System::Windows::Forms::Button());
+			this->label9 = (gcnew System::Windows::Forms::Label());
+			this->listBox2 = (gcnew System::Windows::Forms::ListBox());
+			this->label8 = (gcnew System::Windows::Forms::Label());
+			this->tabPage3 = (gcnew System::Windows::Forms::TabPage());
+			this->label13 = (gcnew System::Windows::Forms::Label());
+			this->button8 = (gcnew System::Windows::Forms::Button());
+			this->checkBox1 = (gcnew System::Windows::Forms::CheckBox());
+			this->button7 = (gcnew System::Windows::Forms::Button());
+			this->label12 = (gcnew System::Windows::Forms::Label());
+			this->listBox3 = (gcnew System::Windows::Forms::ListBox());
+			this->label11 = (gcnew System::Windows::Forms::Label());
 			this->fileSystemWatcher1 = (gcnew System::IO::FileSystemWatcher());
 			this->openFileDialog1 = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->openFileDialog2 = (gcnew System::Windows::Forms::OpenFileDialog());
@@ -123,6 +155,8 @@ namespace ClientGUI {
 			this->tabPage1->SuspendLayout();
 			this->panel1->SuspendLayout();
 			this->tabPage2->SuspendLayout();
+			this->panel2->SuspendLayout();
+			this->tabPage3->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->fileSystemWatcher1))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -130,6 +164,7 @@ namespace ClientGUI {
 			// 
 			this->tabControl1->Controls->Add(this->tabPage1);
 			this->tabControl1->Controls->Add(this->tabPage2);
+			this->tabControl1->Controls->Add(this->tabPage3);
 			this->tabControl1->Location = System::Drawing::Point(12, 12);
 			this->tabControl1->Name = L"tabControl1";
 			this->tabControl1->SelectedIndex = 0;
@@ -150,6 +185,7 @@ namespace ClientGUI {
 			// 
 			// panel1
 			// 
+			this->panel1->Controls->Add(this->label3);
 			this->panel1->Controls->Add(this->label7);
 			this->panel1->Controls->Add(this->button2);
 			this->panel1->Controls->Add(this->label6);
@@ -168,6 +204,16 @@ namespace ClientGUI {
 			this->panel1->Name = L"panel1";
 			this->panel1->Size = System::Drawing::Size(658, 388);
 			this->panel1->TabIndex = 0;
+			// 
+			// label3
+			// 
+			this->label3->AutoSize = true;
+			this->label3->Location = System::Drawing::Point(16, 364);
+			this->label3->Name = L"label3";
+			this->label3->Size = System::Drawing::Size(445, 13);
+			this->label3->TabIndex = 15;
+			this->label3->Text = L"                                                                                 "
+				L"                                                                 ";
 			// 
 			// label7
 			// 
@@ -292,6 +338,7 @@ namespace ClientGUI {
 			this->listBox1->FormattingEnabled = true;
 			this->listBox1->Location = System::Drawing::Point(19, 90);
 			this->listBox1->Name = L"listBox1";
+			this->listBox1->SelectionMode = System::Windows::Forms::SelectionMode::MultiSimple;
 			this->listBox1->Size = System::Drawing::Size(210, 238);
 			this->listBox1->TabIndex = 0;
 			// 
@@ -308,10 +355,159 @@ namespace ClientGUI {
 			// 
 			// panel2
 			// 
+			this->panel2->Controls->Add(this->label10);
+			this->panel2->Controls->Add(this->button6);
+			this->panel2->Controls->Add(this->button5);
+			this->panel2->Controls->Add(this->label9);
+			this->panel2->Controls->Add(this->listBox2);
+			this->panel2->Controls->Add(this->label8);
 			this->panel2->Location = System::Drawing::Point(6, 6);
 			this->panel2->Name = L"panel2";
 			this->panel2->Size = System::Drawing::Size(658, 388);
 			this->panel2->TabIndex = 0;
+			// 
+			// label10
+			// 
+			this->label10->AutoSize = true;
+			this->label10->Location = System::Drawing::Point(78, 355);
+			this->label10->Name = L"label10";
+			this->label10->Size = System::Drawing::Size(328, 13);
+			this->label10->TabIndex = 6;
+			this->label10->Text = L"                                                                                 "
+				L"                          ";
+			// 
+			// button6
+			// 
+			this->button6->Location = System::Drawing::Point(379, 179);
+			this->button6->Name = L"button6";
+			this->button6->Size = System::Drawing::Size(125, 66);
+			this->button6->TabIndex = 5;
+			this->button6->Text = L"Close Check-In";
+			this->button6->UseVisualStyleBackColor = true;
+			this->button6->Click += gcnew System::EventHandler(this, &ClientForm::button6_Click);
+			// 
+			// button5
+			// 
+			this->button5->Location = System::Drawing::Point(168, 85);
+			this->button5->Name = L"button5";
+			this->button5->Size = System::Drawing::Size(86, 23);
+			this->button5->TabIndex = 4;
+			this->button5->Text = L"Get Packages";
+			this->button5->UseVisualStyleBackColor = true;
+			this->button5->Click += gcnew System::EventHandler(this, &ClientForm::button5_Click);
+			// 
+			// label9
+			// 
+			this->label9->AutoSize = true;
+			this->label9->Location = System::Drawing::Point(78, 90);
+			this->label9->Name = L"label9";
+			this->label9->Size = System::Drawing::Size(84, 13);
+			this->label9->TabIndex = 3;
+			this->label9->Text = L"Open Packages";
+			// 
+			// listBox2
+			// 
+			this->listBox2->FormattingEnabled = true;
+			this->listBox2->Location = System::Drawing::Point(81, 118);
+			this->listBox2->Name = L"listBox2";
+			this->listBox2->Size = System::Drawing::Size(173, 212);
+			this->listBox2->TabIndex = 2;
+			// 
+			// label8
+			// 
+			this->label8->AutoSize = true;
+			this->label8->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 14.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
+			this->label8->Location = System::Drawing::Point(229, 26);
+			this->label8->Name = L"label8";
+			this->label8->Size = System::Drawing::Size(191, 24);
+			this->label8->TabIndex = 1;
+			this->label8->Text = L"Close Open Check-In";
+			// 
+			// tabPage3
+			// 
+			this->tabPage3->Controls->Add(this->label13);
+			this->tabPage3->Controls->Add(this->button8);
+			this->tabPage3->Controls->Add(this->checkBox1);
+			this->tabPage3->Controls->Add(this->button7);
+			this->tabPage3->Controls->Add(this->label12);
+			this->tabPage3->Controls->Add(this->listBox3);
+			this->tabPage3->Controls->Add(this->label11);
+			this->tabPage3->Location = System::Drawing::Point(4, 22);
+			this->tabPage3->Name = L"tabPage3";
+			this->tabPage3->Padding = System::Windows::Forms::Padding(3);
+			this->tabPage3->Size = System::Drawing::Size(670, 400);
+			this->tabPage3->TabIndex = 2;
+			this->tabPage3->Text = L"tabPage3";
+			this->tabPage3->UseVisualStyleBackColor = true;
+			// 
+			// label13
+			// 
+			this->label13->AutoSize = true;
+			this->label13->Location = System::Drawing::Point(289, 309);
+			this->label13->Name = L"label13";
+			this->label13->Size = System::Drawing::Size(346, 13);
+			this->label13->TabIndex = 6;
+			this->label13->Text = L"                                                                                 "
+				L"                                ";
+			// 
+			// button8
+			// 
+			this->button8->Location = System::Drawing::Point(368, 200);
+			this->button8->Name = L"button8";
+			this->button8->Size = System::Drawing::Size(139, 59);
+			this->button8->TabIndex = 5;
+			this->button8->Text = L"Check-Out";
+			this->button8->UseVisualStyleBackColor = true;
+			this->button8->Click += gcnew System::EventHandler(this, &ClientForm::button8_Click);
+			// 
+			// checkBox1
+			// 
+			this->checkBox1->AutoSize = true;
+			this->checkBox1->Location = System::Drawing::Point(368, 142);
+			this->checkBox1->Name = L"checkBox1";
+			this->checkBox1->Size = System::Drawing::Size(139, 17);
+			this->checkBox1->TabIndex = 4;
+			this->checkBox1->Text = L"include dependencies \?";
+			this->checkBox1->UseVisualStyleBackColor = true;
+			// 
+			// button7
+			// 
+			this->button7->Location = System::Drawing::Point(142, 78);
+			this->button7->Name = L"button7";
+			this->button7->Size = System::Drawing::Size(96, 23);
+			this->button7->TabIndex = 3;
+			this->button7->Text = L"Get Packages";
+			this->button7->UseVisualStyleBackColor = true;
+			this->button7->Click += gcnew System::EventHandler(this, &ClientForm::button7_Click);
+			// 
+			// label12
+			// 
+			this->label12->AutoSize = true;
+			this->label12->Location = System::Drawing::Point(41, 83);
+			this->label12->Name = L"label12";
+			this->label12->Size = System::Drawing::Size(89, 13);
+			this->label12->TabIndex = 2;
+			this->label12->Text = L"Server Packages";
+			// 
+			// listBox3
+			// 
+			this->listBox3->FormattingEnabled = true;
+			this->listBox3->Location = System::Drawing::Point(44, 110);
+			this->listBox3->Name = L"listBox3";
+			this->listBox3->Size = System::Drawing::Size(194, 212);
+			this->listBox3->TabIndex = 1;
+			// 
+			// label11
+			// 
+			this->label11->AutoSize = true;
+			this->label11->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 14.25F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
+			this->label11->Location = System::Drawing::Point(279, 38);
+			this->label11->Name = L"label11";
+			this->label11->Size = System::Drawing::Size(100, 24);
+			this->label11->TabIndex = 0;
+			this->label11->Text = L"Check-Out";
 			// 
 			// fileSystemWatcher1
 			// 
@@ -341,6 +537,10 @@ namespace ClientGUI {
 			this->panel1->ResumeLayout(false);
 			this->panel1->PerformLayout();
 			this->tabPage2->ResumeLayout(false);
+			this->panel2->ResumeLayout(false);
+			this->panel2->PerformLayout();
+			this->tabPage3->ResumeLayout(false);
+			this->tabPage3->PerformLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->fileSystemWatcher1))->EndInit();
 			this->ResumeLayout(false);
 
@@ -393,8 +593,62 @@ namespace ClientGUI {
 	}
 
 	 //-----check-In button--------------------------------------------------------//
-	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
+	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
 
+		if (textBox1->Text == "")
+		{
+			label3->Text = "Please enter a package Name";
+			return;
+		}
+		else if (textBox2->Text == "")
+		{
+			label3->Text = "Please select a Implementation file for the package";
+			return;
+		}
+		else if (textBox3->Text == "")
+		{
+			label3->Text = "Please select a Header file for the package";
+			return;
+		}
+
+		vector<Package> dependencies;
+		//get all selected packages for dependenencies
+		for each (auto item in listBox1->SelectedItems)
+		{
+			System::String^ itemString = item->ToString();
+			System::String^ depName = itemString->Split(' ')[0];
+			System::String^ depVersion = itemString->Split(' ')[2];
+
+			Package dep;
+			dep.name = marshal_as<std::string>(depName);
+			dep.version = marshal_as<std::string>(depVersion);
+			dependencies.push_back(dep);
+		}
+
+		HttpMessage msg;
+		HttpMessage::Attribute attr;
+		attr.first = "Command"; attr.second = "Check-In";
+		msg.addAttribute(attr);
+		HttpMessage::Attribute cppFilePath;
+		cppFilePath.first = "cppFilePath" ; cppFilePath.second = marshal_as<std::string>(textBox2->Text);
+		msg.addAttribute(cppFilePath);
+		HttpMessage::Attribute hFilePath;
+		hFilePath.first = "hFilePath"; hFilePath.second = marshal_as<std::string>(textBox3->Text);
+		msg.addAttribute(hFilePath);
+
+		Package checkInPackage;
+		checkInPackage.name = marshal_as<std::string>(textBox1->Text);
+
+		XMLResponseBodyGenerator xml;
+		msg.setBody(xml.getRequestBodyForCheckIn(checkInPackage, dependencies));
+
+		pSender->postMessage(msg);
+
+		//currently blocking on the response
+		HttpMessage response = pReceiver->getMessage();
+
+		label3->Text = gcnew String(response.getBody().c_str());
 	}
 
 	private: System::Void tabControl1_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e)
@@ -430,14 +684,147 @@ namespace ClientGUI {
 
 		for (auto package : packages)
 		{
-			std::string packagNameVer = package.name + "_" + package.version;
-			System::String^ pack = gcnew String(packagNameVer.c_str());
+			if (package.status != "open")
+			{
+				std::string packagNameVer = package.name + " Version " + package.version;
+				System::String^ pack = gcnew String(packagNameVer.c_str());
 
-			listBox1->Items->Add(pack);
+				listBox1->Items->Add(pack);
+			}			
 		}
 	}
 	
+    //------------------Get open packages list----------------------------------------//
+	private: System::Void button5_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		listBox2->Items->Clear();
 
+		HttpMessage msg;
+		HttpMessage::Attribute attr;
+		attr.first = "Command"; attr.second = "GetOpenCheck-In";
+		msg.addAttribute(attr);
+
+		pSender->postMessage(msg);
+
+		//currently blocking on the response
+		HttpMessage response = pReceiver->getMessage();
+
+		XMLResponseBodyGenerator xmlMgr;
+		std::vector<Package> packages = xmlMgr.parseResponseBodyForGetFiles(response.getBody());
+
+		for (auto package : packages)
+		{
+			std::string packagNameVer = package.name + " Version " + package.version;
+			System::String^ pack = gcnew String(packagNameVer.c_str());
+
+			listBox2->Items->Add(pack);
+		}
+	}
+
+	//-------------Close Check-In Package--------------------------------------------//
+	private: System::Void button6_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		if (listBox2->SelectedItems->Count == 0)
+		{
+			label10->Text = "Please select a Package";
+			return;
+		}
+
+		HttpMessage msg;
+		HttpMessage::Attribute attr;
+		attr.first = "Command"; attr.second = "CloseOpenCheck-In";
+		msg.addAttribute(attr);
+
+		System::String^ item = listBox2->SelectedItem->ToString();
+		System::String^ packageName = item->Split(' ')[0];
+		System::String^ packageVersion = item->Split(' ')[2];
+
+		Package closeCheckInPackage;
+		closeCheckInPackage.name = marshal_as<std::string>(packageName);
+		closeCheckInPackage.version = marshal_as<std::string>(packageVersion);
+
+		XMLResponseBodyGenerator xml;
+		msg.setBody(xml.getRequestBodyForCloseCheckIn(closeCheckInPackage));
+
+		pSender->postMessage(msg);
+
+		//currently blocking on the response
+		HttpMessage response = pReceiver->getMessage();
+
+		label10->Text = gcnew String(response.getBody().c_str());
+
+	}
+
+    //----------------Get Server Packages : Check-Out Tab ---------------------------//
+	private: System::Void button7_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+		listBox3->Items->Clear();
+
+		HttpMessage msg;
+		HttpMessage::Attribute attr;
+		attr.first = "Command"; attr.second = "GetFiles";
+		msg.addAttribute(attr);
+
+		pSender->postMessage(msg);
+
+		//currently blocking on the response
+		HttpMessage response = pReceiver->getMessage();
+
+		XMLResponseBodyGenerator xmlMgr;
+		std::vector<Package> packages = xmlMgr.parseResponseBodyForGetFiles(response.getBody());
+
+		for (auto package : packages)
+		{
+				std::string packagNameVer = package.name + " Version " + package.version;
+				System::String^ pack = gcnew String(packagNameVer.c_str());
+
+				listBox3->Items->Add(pack);
+		}
+	}
+
+	//----------Check-Out package----------------------------------------------------//
+	private: System::Void button8_Click(System::Object^  sender, System::EventArgs^  e) 
+	{
+		if (listBox3->SelectedItems->Count == 0)
+		{
+			label13->Text = "Please select a Package";
+			return;
+		}
+
+		HttpMessage msg;
+		HttpMessage::Attribute attr;
+		attr.first = "Command"; attr.second = "Check-Out";
+		msg.addAttribute(attr);
+
+		System::Boolean includeDep = checkBox1->Checked;
+
+		if (includeDep == true)
+		{
+			HttpMessage::Attribute includeDependencies;
+			includeDependencies.first = "includeDependencies"; includeDependencies.second = "true";
+			msg.addAttribute(includeDependencies);
+		}
+
+		System::String^ item = listBox3->SelectedItem->ToString();
+		System::String^ packageName = item->Split(' ')[0];
+		System::String^ packageVersion = item->Split(' ')[2];
+
+		Package checkOutPackage;
+		checkOutPackage.name = marshal_as<std::string>(packageName);
+		checkOutPackage.version = marshal_as<std::string>(packageVersion);
+
+		vector<Package> dependencies;  //will send empty dependency in body, server fills up if required
+
+		XMLResponseBodyGenerator xml;
+		msg.setBody(xml.getRequestBodyforCheckOut(checkOutPackage, dependencies));
+
+		pSender->postMessage(msg);
+
+		//currently blocking on the response
+		HttpMessage response = pReceiver->getMessage();
+
+		label13->Text = gcnew String("Packages have been downloaded");
+	}
 };
 
 } //end of namespace

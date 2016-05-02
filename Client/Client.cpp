@@ -312,19 +312,10 @@ void SenderHandler::GetFiles(SocketConnecter& si, HttpMessage httpMessage)
 //------------Command: CheckIn--------------------------//
 void SenderHandler::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
 {
-	
-	//mocking checkIn Package and it's dependencies
-	Package checkInPackage;
-	checkInPackage.name = "Package5"; 
-	vector<Package> dependencies; 
-	Package dep1; dep1.name = "Package4"; dep1.version = "1";
-	dependencies.push_back(dep1);
-
-	string cppFileName = checkInPackage.name + ".cpp";
-	string hFileName = checkInPackage.name + ".h";
-	string uploadDir = "../clientFolder/Upload";
-	FileInfo cppFileInfo(uploadDir + "/" + cppFileName);
-	FileInfo hFileInfo(uploadDir + "/" + hFileName);
+	string cppFilePath = httpMessage.findValue("cppFilePath");
+	string hFilePath = httpMessage.findValue("hFilePath");
+	FileInfo cppFileInfo(cppFilePath);
+	FileInfo hFileInfo(hFilePath);
 
 	Attribute cppFileLengthAttrib ; 
 	cppFileLengthAttrib.first = "cppFileLength"; 
@@ -336,11 +327,6 @@ void SenderHandler::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
 	httpMessage.addAttribute(cppFileLengthAttrib);
 	httpMessage.addAttribute(hFileLengthAttrib);
 
-	XMLResponseBodyGenerator xml;
-	string body = xml.getRequestBodyForCheckIn(checkInPackage, dependencies);
-	
-	httpMessage.setBody(body);
-
 	std::cout << "\nSending Message to Server:-\n";
 	httpMessage.printMessage();
 
@@ -350,11 +336,11 @@ void SenderHandler::CheckIn(SocketConnecter& si, HttpMessage httpMessage)
 	std::cout << "\nSending files to Server..\n";
 
 	//--------Send Cpp file first--------------
-	sendFile(uploadDir + "/" + cppFileName, si);
+	sendFile(cppFilePath, si);
 	
 
 	//------Send h file ----------------------
-	sendFile(uploadDir + "/" + hFileName,si);
+	sendFile(hFilePath,si);
 }
 
 //-----------Command: GetOpenCheckIns------------------//
@@ -386,17 +372,6 @@ void SenderHandler::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessag
 //----------Command: CheckOut--------------------------//
 void SenderHandler::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
 {
-	std::cout << "\nSending Message to Server:-\n";
-	Package checkOutPackage;
-	checkOutPackage.name = "Package2" ; checkOutPackage.version = "1";
-	vector<Package> dependencies;  //will send empty dependencies, server will find out the dependencies
-	XMLResponseBodyGenerator xmlResponseBodyGenerator;
-	httpMessage.setBody(xmlResponseBodyGenerator.getRequestBodyforCheckOut(checkOutPackage, dependencies));
-
-	Attribute includeDependencies;
-	includeDependencies.first = "includeDependencies"; includeDependencies.second = "true";
-	httpMessage.addAttribute(includeDependencies);
-
 	httpMessage.printMessage();
 
 	si.sendString(httpMessage.buildMessage());

@@ -1,8 +1,12 @@
-
-
-
-
-
+/////////////////////////////////////////////////////////////////////////////////
+// MetadataMgr.cpp - Manages creating/parsing metadata for packages            //
+// ver 1.0                                                                     //
+// -----------------------------------------------------------------------     //
+// Language:    Visual C++, Visual Studio Enterprise 2015                      //
+// Platform:    ThinkPad L440, Core i7-4712MQ                                  //
+// Author:      Alok Arya                                                      //
+//              (315) 728-0088, alarya@syr.edu                                 //
+/////////////////////////////////////////////////////////////////////////////////
 #include "../FileSystem//FileSystem.h"
 #include "../XmlDocument/XmlDocument.h"
 #include "MetadataMgr.h"
@@ -135,34 +139,40 @@ vector<Package> MetadataMgr::parsePackageDependencies(string metadata)
 	{
 		for (auto package : dependencies)
 		{
-			Package package_;
-			vector<sPtr> _p = package->children();
-			for (auto packageInfo : _p)
-			{
-				if (packageInfo->tag() == "name")
-				{
-					vector<sPtr> packageInfoName = packageInfo->children();
-					for (auto child : packageInfoName)
-						package_.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-				if (packageInfo->tag() == "version")
-				{
-					vector<sPtr> packageInfoVersion = packageInfo->children();
-					for (auto child : packageInfoVersion)
-						package_.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-				if (packageInfo->tag() == "status")
-				{
-					vector<sPtr> packageInfoStatus = packageInfo->children();
-					for (auto child : packageInfoStatus)
-						package_.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
-				}
-			}
+			Package package_ = parsePackageElement(package);
 			if (package_.name != "")
 				dependencyPackages.push_back(package_);
 		}
 	}
 	return dependencyPackages;
+}
+
+Package MetadataMgr::parsePackageElement(sPtr package)
+{
+	Package package_;
+	vector<sPtr> _p = package->children();
+	for (auto packageInfo : _p)
+	{
+		if (packageInfo->tag() == "name")
+		{
+			vector<sPtr> packageInfoName = packageInfo->children();
+			for (auto child : packageInfoName)
+				package_.name = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "version")
+		{
+			vector<sPtr> packageInfoVersion = packageInfo->children();
+			for (auto child : packageInfoVersion)
+				package_.version = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+		if (packageInfo->tag() == "status")
+		{
+			vector<sPtr> packageInfoStatus = packageInfo->children();
+			for (auto child : packageInfoStatus)
+				package_.status = child->value().erase(child->value().find_last_not_of(" \n\r\t") + 1);
+		}
+	}
+	return package_;
 }
 
 #pragma endregion
@@ -217,37 +227,30 @@ int main()
 	Package dep2;
 	dep2.name = "Package1"; dep2.status = "closed"; dep2.version = "2";
 	dependencies.push_back(dep1); dependencies.push_back(dep2);
-
 	std::string data = metadataMgr.createMetaData(checkIn, dependencies);
 	std::cout << data;
-
 	std::cout << "\n\n---------------parsed metadata-------------------------\n";
 	pair < Package, vector<Package>> parseMetadata;
 	parseMetadata = metadataMgr.parsePackageMetaData(data);
 	std::cout << "\n Package: \n";
 	std::cout << "Name: " << parseMetadata.first.name << ", version: " << parseMetadata.first.version << ", status: " << parseMetadata.first.status;
 	std::cout << "\nDependencies:- \n";
-	for (auto dep : parseMetadata.second)
-	{
+	for (auto dep : parseMetadata.second){
 		std::cout << "\n";
 		std::cout << dep.name << ", " << dep.version << ", " << dep.status;
 		std::cout << "\n";
 	}
-
 	std::cout << "\n\n  -----------------------test build dependency map --------------\n";
 	dependencyList* depList = new dependencyList();
 	packageVersionsMap* packVersionMap = new packageVersionsMap();
 	metadataMgr.buildDependencyList(depList, packVersionMap);
-	for (auto dep : *depList)
-	{
+	for (auto dep : *depList){
 		std::cout << "Name: " << dep.first.name << ", version: " << dep.first.version << ", status: " << dep.first.status << "\n";
 		std::cout << "Dependencies: \n";
 		for (auto deps : dep.second)
-		{
 			std::cout << "\tName: " << deps.name << ", version: " << deps.version << ", status: " << deps.status << "\n";
-		}
 	}
-	cout << "\n-------pack version list-----------\n";
+	std::cout << "\n-------pack version list-----------\n";
 	for (auto packVersions : *packVersionMap)
 	{
 		std::cout << "\nName: " << packVersions.first << "\n";

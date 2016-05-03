@@ -1,2 +1,7 @@
 ﻿  XmlDocument.cpp
+  XmlParser.cpp
+  XmlElement.cpp
+  xmlElementParts.cpp
+  Tokenizer.cpp
+  Generating Code...
   XmlDocument.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\XmlDocument.exe

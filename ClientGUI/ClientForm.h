@@ -1,5 +1,38 @@
 #pragma once
-
+/////////////////////////////////////////////////////////////////////////////
+// ClientForm.h - Code Behind file for the GUI App                         //
+// ver 1.0                                                                 //
+// ----------------------------------------------------------------------- //
+// Language:    Visual C++, Visual Studio Enterprise 2015                  //
+// Platform:    ThinkPad L440, Core i7-4712MQ                              //
+// Author:      Alok Arya                                                  //
+//              (315) 728-0088, alarya@syr.edu                             //
+/////////////////////////////////////////////////////////////////////////////
+/*
+* Module Operations:
+* ==================
+* Defines the GUI elements that appear
+* Wires up the event handlers for the GUI elements
+*
+*
+* Required Files:
+* ===============
+* ClientForm.cpp, ClientForm.resx
+* Channel.h, Channel.cpp
+* HttpMessage.h, HttpMessage.cpp
+* XMLResponseBodyGenerator.h, XMLResponseBodyGenerator.cpp
+* 
+*
+* Build Command:
+* ==============
+* Build Command: devenv Project4.sln /rebuild debug /project ClientGUI/ClientGUI.vcxproj
+*
+* Maintenance History:
+* ====================
+*
+* ver 1.0 : 2 May 2016
+* - first release
+*/
 
 #include "../Channel/Channel.h"
 #include "../HttpMessage/HttpMessage.h"
@@ -27,6 +60,7 @@ namespace ClientGUI {
 
 		ISender* pSender;
 		IReceiver* pReceiver;
+		IChannel* pChannel;
 	private: System::Windows::Forms::Label^  label7;
 	private: System::Windows::Forms::Button^  button2;
 	private: System::Windows::Forms::Label^  label6;
@@ -45,7 +79,7 @@ namespace ClientGUI {
 	private: System::Windows::Forms::Label^  label12;
 	private: System::Windows::Forms::ListBox^  listBox3;
 	private: System::Windows::Forms::Label^  label11;
-			 IChannel* pChannel;
+			 
 
 	public:
 		ClientForm(void)
@@ -593,39 +627,30 @@ namespace ClientGUI {
 	}
 
 	 //-----check-In button--------------------------------------------------------//
-	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) 
-	{
-
-		if (textBox1->Text == "")
-		{
+	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {	
+		if (textBox1->Text == ""){		
 			label3->Text = "Please enter a package Name";
 			return;
 		}
-		else if (textBox2->Text == "")
-		{
+		else if (textBox2->Text == ""){
 			label3->Text = "Please select a Implementation file for the package";
 			return;
 		}
-		else if (textBox3->Text == "")
-		{
+		else if (textBox3->Text == ""){
 			label3->Text = "Please select a Header file for the package";
 			return;
 		}
-
 		vector<Package> dependencies;
 		//get all selected packages for dependenencies
-		for each (auto item in listBox1->SelectedItems)
-		{
+		for each (auto item in listBox1->SelectedItems){		
 			System::String^ itemString = item->ToString();
 			System::String^ depName = itemString->Split(' ')[0];
 			System::String^ depVersion = itemString->Split(' ')[2];
-
 			Package dep;
 			dep.name = marshal_as<std::string>(depName);
 			dep.version = marshal_as<std::string>(depVersion);
 			dependencies.push_back(dep);
 		}
-
 		HttpMessage msg;
 		HttpMessage::Attribute attr;
 		attr.first = "Command"; attr.second = "Check-In";
@@ -642,12 +667,9 @@ namespace ClientGUI {
 
 		XMLResponseBodyGenerator xml;
 		msg.setBody(xml.getRequestBodyForCheckIn(checkInPackage, dependencies));
-
 		pSender->postMessage(msg);
-
 		//currently blocking on the response
 		HttpMessage response = pReceiver->getMessage();
-
 		label3->Text = gcnew String(response.getBody().c_str());
 	}
 

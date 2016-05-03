@@ -1,15 +1,19 @@
-
-
-
+/////////////////////////////////////////////////////////////////////////////
+// HttpMessage.h - Defines and HTTP like Message class for communication   //
+// ver 1.0                                                                 //
+// ----------------------------------------------------------------------- //
+// Language:    Visual C++, Visual Studio Enterprise 2015                  //
+// Platform:    ThinkPad L440, Core i7-4712MQ                              //
+// Author:      Alok Arya                                                  //
+//              (315) 728-0088, alarya@syr.edu                             //
+/////////////////////////////////////////////////////////////////////////////
 
 #include "HttpMessage.h"
 #include <iostream>
 #include <sstream>
 
-
-
 /////////////////////////////////////////////
-//HttpMessage Class
+// HttpMessage Class
 //
 /////////////////////////////////////////////
 
@@ -24,11 +28,13 @@ using Message = std::string;
 //-------------Constructor--------------------//
 HttpMessage::HttpMessage()
 {
+
 }
 
 //-------------Destructor---------------------//
 HttpMessage::~HttpMessage()
 {
+
 }
 
 //------------Adds a Key Value pair to Http Message------//
@@ -52,7 +58,6 @@ Value HttpMessage::findValue(const Name& name)
 //---------returns a reference to all Key Value pairs----//
 Attributes HttpMessage::attributes()
 {
-
 	return attributes_ ;
 }
 
@@ -123,16 +128,13 @@ void HttpMessage::parseMessage(const Message& msg)
 {
 	if (msg.size() <= 0)
 		return;
-
-	std::string line;
-	
+	std::string line;	
 	size_t counter = 0;
 	std::string first;
 	std::string second;
 	//scan attributes
 	while(true)
 	{
-
 		if (msg[counter] == '\n')
 		{
 			first = "";
@@ -153,7 +155,6 @@ void HttpMessage::parseMessage(const Message& msg)
 			attr.first = first; attr.second = second;
 			addAttribute(attr);
 			line = "";
-
 			if (msg[counter + 1] == '\n')  //it was last attribute
 				break;
 		}

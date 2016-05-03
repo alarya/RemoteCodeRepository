@@ -1,8 +1,11 @@
-
-
-
-
-
+/////////////////////////////////////////////////////////////////////////////
+// Channel.h - Used to Transfer messages between native client code and    //
+//             managed C++ code with GUI                                   //
+// - build as DLL to show how C++\CLI client can use native code channel   //
+// - Channel reads from sendQ and writes to recvQ                          //
+//                                                                         //
+// Alok Arya															   //
+/////////////////////////////////////////////////////////////////////////////
 
 #define IN_DLL
 #include "Channel.h"

@@ -152,7 +152,6 @@
     <ClInclude Include="ClientForm.h">
       <FileType>CppForm</FileType>
     </ClInclude>
-    <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\HttpMessage\HttpMessage.cpp" />
@@ -163,7 +162,6 @@
     <ClCompile Include="..\XmlParser\XmlParser.cpp" />
     <ClCompile Include="..\XMLResponseBodyGenerator\XMLResponseBodyGenerator.cpp" />
     <ClCompile Include="ClientForm.cpp" />
-    <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ClientForm.resx">

@@ -1,8 +1,13 @@
-
-
-
-
-
+//////////////////////////////////////////////////////////////////////////////////////////
+// XMLResponseBodyGenerator.cpp - Used for generating and parsing XML body used for     //
+//				                HttpMessages                                            //
+// ver 1.0                                                                              //
+// -----------------------------------------------------------------------              //
+// Language:    Visual C++, Visual Studio Enterprise 2015                               //
+// Platform:    ThinkPad L440, Core i7-4712MQ                                           //
+// Author:      Alok Arya                                                               //
+//              (315) 728-0088, alarya@syr.edu                                          //
+//////////////////////////////////////////////////////////////////////////////////////////
 
 #include "XMLResponseBodyGenerator.h"
 #include "../XmlDocument/XmlDocument.h"

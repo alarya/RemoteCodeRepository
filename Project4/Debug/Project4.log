@@ -1,2 +1,18 @@
 ﻿  Server.cpp
+  XMLResponseBodyGenerator.cpp
+  XmlParser.cpp
+  XmlElement.cpp
+  xmlElementParts.cpp
+  Tokenizer.cpp
+  XmlDocument.cpp
+  Utilities.cpp
+  Sockets.cpp
+  Repository.cpp
+  MetadataMgr.cpp
+  FileMgr.cpp
+  Logger.cpp
+  Cpp11-BlockingQueue.cpp
+  HttpMessage.cpp
+  FileSystem.cpp
+  Generating Code...
   Project4.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\Server.exe

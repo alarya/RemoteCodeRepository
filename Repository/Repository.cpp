@@ -1,7 +1,12 @@
-
-
-
-
+///////////////////////////////////////////////////////////////////////////////////
+// Repository.cpp - Manages the check-In, Check-Out and access of server packages  //
+// ver 1.0                                                                       //
+// -----------------------------------------------------------------------       //
+// Language:    Visual C++, Visual Studio Enterprise 2015                        //
+// Platform:    ThinkPad L440, Core i7-4712MQ                                    //
+// Author:      Alok Arya                                                        //
+//              (315) 728-0088, alarya@syr.edu                                   //
+///////////////////////////////////////////////////////////////////////////////////
 #include "MetadataMgr.h"
 #include "Repository.h"
 #include "FileMgr.h"
@@ -176,9 +181,6 @@ PackageList Repository::checkOutPackageDependencies(Package package, bool includ
 {
 	PackageList packages;
 	FileMgr fileMgr;
-
-	//string pathCppFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".cpp");
-	//string pathHFile = fileMgr.getFileSpec(packageDirPath + "/" + package.name + "_" + package.version + "/" + package.name + ".h");
 
 	if (includeDependencies)
 	{

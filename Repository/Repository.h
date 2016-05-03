@@ -1,6 +1,47 @@
 #ifndef REPOSITORY_H
 #define REPOSITORY_H
-
+///////////////////////////////////////////////////////////////////////////////////
+// Repository.h - Manages the check-In, Check-Out and access of server packages  //
+// ver 1.0                                                                       //
+// -----------------------------------------------------------------------       //
+// Language:    Visual C++, Visual Studio Enterprise 2015                        //
+// Platform:    ThinkPad L440, Core i7-4712MQ                                    //
+// Author:      Alok Arya                                                        //
+//              (315) 728-0088, alarya@syr.edu                                   //
+///////////////////////////////////////////////////////////////////////////////////
+/*
+* Module Operations:
+* ==================
+* The Repository is used for following functions
+*           - Helps in Check-In of a new package
+*           - Get a list of packages in the server.
+*           - Close a new Check-In package which is "open"
+*           - Manages versioning of the packages
+*           - Check-out a package with optionally including it's dependencies too
+* 
+* Public Interface:
+* =================
+*
+*
+* Required Files:
+* ===============
+* Repository.cpp
+* MetadataMgr.h, MetadaMgr.cpp
+* XMLResponseBodyGenerator.h, XMLResponseBodyGenerator.cpp
+* FileMgr.h, FileMgr.cpp
+* FileSystem.h, FileSystem.cpp
+*
+*
+* Build Command:
+* ==============
+* Build Command: devenv Project4.sln /rebuild debug /project Repository/Repository.vcxproj
+*
+* Maintenance History:
+* ====================
+*
+* ver 1.0 : 2 May 2016
+* - first release
+*/
 
 #include "MetadataMgr.h"
 #include <vector>

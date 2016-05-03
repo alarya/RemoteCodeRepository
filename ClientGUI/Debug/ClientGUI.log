@@ -1,6 +1,4 @@
 ﻿  ClientForm.cpp
-  Window.cpp
-  Generating Code...
   HttpMessage.obj : /DEBUG:FASTLINK is not supported when managed code is present; restarting link with /DEBUG:FULL
   ClientGUI.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\ClientGUI.exe
   ClientGUI.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\ClientGUI.pdb (Partial PDB)

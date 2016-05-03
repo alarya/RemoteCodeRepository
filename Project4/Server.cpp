@@ -1,23 +1,48 @@
 /////////////////////////////////////////////////////////////////////////
-// StringServer.cpp - Demonstrates simple one-way string messaging     //
+// Server.cpp - Starts the server and starts request/response threads  //
 //                                                                     //
 // Jim Fawcett, CSE687 - Object Oriented Design, Spring 2016           //
 // Application: OOD Project #4                                         //
 // Platform:    Visual Studio 2015, Dell XPS 8900, Windows 10 pro      //
 /////////////////////////////////////////////////////////////////////////
 /*
-* This package implements a server that receives string messages
-* from multiple concurrent clients and simply displays them.
+* This package implements a server that receives requests from multiple 
+* clients. The clients send Http styles messages for requests and server
+* responds with Http styles messages too. The server starts a Sender thread
+* and a client handler thread for each request from one particular client
 *
-* It's purpose is to provide a very simple illustration of how to use
-* the Socket Package provided for Project #4.
-*/
+*
 /*
 * Required Files:
-*   StringClient.cpp, StringServer.cpp
+*   HttpMessage.h, HttpMessage.cpp
+*   Repository.h, Repository.cpp
+*   XMLResponseBodyGenerator.h, XMLResponseBodyGenerator.cpp
+*   FileSystem.h, FileSystem.cpp
 *   Sockets.h, Sockets.cpp, Cppll-BlockingQueue.h
 *   Logger.h, Logger.cpp, Cpp11-BlockingQueue.h
 *   Utilities.h, Utilities.cpp
+* Public Interface:
+* =================
+*
+* ClientHandler cl;              //instantiates a new clientHandler
+*								   is a callable object to handle client requests
+*								   started on an independent thread
+*
+* SendHandler se;               //instantiates a new SendHandler
+*								   is a callable object to handle sending request and it's related tasks(like file transfer)
+*								   started on an independent thread
+*
+*
+*
+* Build Command:
+* ==============
+* Build Command: devenv Project4.sln /rebuild debug /project Project4/Project4.vcxproj
+*
+* Maintenance History:
+* ====================
+*
+* ver 1.0 : 2 May 2016
+* - first release
 */
 #include "../Sockets/Sockets.h"
 #include "../Logger/Logger.h"
@@ -107,7 +132,6 @@ bool receiveFile(string fileName, size_t fileLength, Socket& socket_)
 		for (size_t i = 0; i < bytesToRead; ++i)
 			blk.push_back(buffer[i]);
 
-		//To:do push block to file
 		file.putBlock(blk);
 
 		//-------check if need to read more
@@ -120,7 +144,6 @@ bool receiveFile(string fileName, size_t fileLength, Socket& socket_)
 }
 
 #pragma endregion
-
 
 
 
@@ -140,6 +163,7 @@ private:
 	void handleGetOpenCheckIn(Socket& socket_, HttpMessage httpMessage);
 	void handleCloseOpenCheckIn(Socket& socket_, HttpMessage httpMessage);
 	static BlockingQueue<HttpMessage> recvQ;
+	void checkCommand(string command, Socket& socket_, HttpMessage httpMessage);
 };
 
 BlockingQueue<HttpMessage> ClientHandler::recvQ;
@@ -152,52 +176,56 @@ void ClientHandler::operator()(Socket& socket_)
 
 		if (msg.size() == 0)
 			break;
-
 		//----------handle message --------------//
 		HttpMessage httpMessage;
 		httpMessage.parseMessage(msg);
 		std::string command = httpMessage.findValue("Command");
 		std::cout << "\nMessage Received From Client \n";
 		httpMessage.printMessage();
-
 		
-		if (command == "GetFiles")
-		{
-			handleGetFiles(socket_,httpMessage);			
-		}
-		else if (command == "Check-In")
+		
+		if (command == "Check-In")
 		{
 			if (!handleCheckIn(socket_, httpMessage))
 				break;
 		}
-		else if (command == "Check-Out")
-		{
-			handleCheckOut(socket_, httpMessage);
-		}
-		else if (command == "GetOpenCheck-In")
-		{
-
-		}
-		else if (command == "CloseOpenCheck-In")
-		{
-
-		}
-		else if (command == "quit")
-		{			
-			std::cout << "\nClient closed connection....\n";
-		}
-		else
-		{
-			std::cout << "\nCommand not recognized\n";
-		}
+		//check other commands too
+		checkCommand(command, socket_, httpMessage);
 
 		//enq msg on receiveQueue for main thread
 		recvQ.enQ(httpMessage);
 	}
-
 	std::cout << "\nClosing connection with client\n";
 	socket_.shutDown();
 	socket_.close();
+}
+
+void ClientHandler::checkCommand(string command, Socket& socket_, HttpMessage httpMessage)
+{
+	if (command == "GetFiles")
+	{
+		handleGetFiles(socket_, httpMessage);
+	}
+	else if (command == "Check-Out")
+	{
+		handleCheckOut(socket_, httpMessage);
+	}
+	else if (command == "GetOpenCheck-In")
+	{
+		std::cout << "\nRequest for getting open Packages....\n";
+	}
+	else if (command == "CloseOpenCheck-In")
+	{
+		std::cout << "\nRequest for closing an open Package....\n";
+	}
+	else if (command == "quit")
+	{
+		std::cout << "\nClient closed connection....\n";
+	}
+	else
+	{
+		std::cout << "\nCommand not recognized\n";
+	}
 }
 
 //------------Handle get files request------------//
@@ -311,8 +339,7 @@ void Sender::sendCheckOutFiles(SocketConnecter& si, HttpMessage response)
 	Package checkOutPackage = xml.parseRequestBodyForCheckOutPackage(response.getBody());
 	vector<Package> dependencies = xml.parseRequestBodyForDependenciesInCheckOut(response.getBody());
 
-	vector<string> filePaths;
-	
+	vector<string> filePaths;	
 	string packageDirBase = "../root";
 
 	//add attributes to send message to client telling about each file size to be sent by server
@@ -340,13 +367,10 @@ void Sender::sendCheckOutFiles(SocketConnecter& si, HttpMessage response)
 		attrDepPackageHLength.second = std::to_string(fileHInfo.size());
 		response.addAttribute(attrDepPackageHLength);
 	}
-
 	si.sendString(response.buildMessage()); // first this message is sent to prepare client for receiving approriate files
-
 	//send check out package first
 	sendFile(packageDirBase + "/" + checkOutPackage.name + "_" + checkOutPackage.version + "/" + checkOutPackage.name + ".cpp",si);
 	sendFile(packageDirBase + "/" + checkOutPackage.name + "_" + checkOutPackage.version + "/" + checkOutPackage.name + ".h", si);
-
 	//send dependencies
 	for (auto dep : dependencies)
 	{

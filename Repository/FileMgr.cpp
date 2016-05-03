@@ -1,6 +1,12 @@
-
-
-
+/////////////////////////////////////////////////////////////////////////////
+// FileMgr.cpp - File functions used by Repository to manage FS of packages //
+// ver 1.0                                                                 //
+// ----------------------------------------------------------------------- //
+// Language:    Visual C++, Visual Studio Enterprise 2015                  //
+// Platform:    ThinkPad L440, Core i7-4712MQ                              //
+// Author:      Alok Arya                                                  //
+//              (315) 728-0088, alarya@syr.edu                             //
+/////////////////////////////////////////////////////////////////////////////
 #include "FileMgr.h"
 #include "../FileSystem/FileSystem.h"
 #include "MetadataMgr.h"
@@ -9,6 +15,8 @@
 
 using namespace std;
 using namespace FileSystem;
+
+
 ///////////////////////////////////////////////////////////////////
 // class FileMgr
 // 

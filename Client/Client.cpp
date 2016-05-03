@@ -1,24 +1,27 @@
 /////////////////////////////////////////////////////////////////////////
-// StringClient.cpp - Demonstrates simple one-way string messaging     //
+// Server.cpp - Starts the server and starts request/response threads  //
 //                                                                     //
 // Jim Fawcett, CSE687 - Object Oriented Design, Spring 2016           //
 // Application: OOD Project #4                                         //
 // Platform:    Visual Studio 2015, Dell XPS 8900, Windows 10 pro      //
 /////////////////////////////////////////////////////////////////////////
 /*
-* This package implements a client that sends string messages
-* to a server that simply displays them.
+* This package implements a server that receives requests from multiple
+* clients. The clients send Http styles messages for requests and server
+* responds with Http styles messages too. The server starts a Sender thread
+* and a client handler thread for each request from one particular client
 *
-* It's purpose is to provide a very simple illustration of how to use
-* the Socket Package provided for Project #4.
-*/
-/*
+*
+*
 * Required Files:
-*   StringClient.cpp, StringServer.cpp
-*   Sockets.h, Sockets.cpp
+*   HttpMessage.h, HttpMessage.cpp
+*   XMLResponseBodyGenerator.h, XMLResponseBodyGenerator.cpp
+*   FileSystem.h, FileSystem.cpp
+*   Sockets.h, Sockets.cpp, Cppll-BlockingQueue.h
 *   Logger.h, Logger.cpp, Cpp11-BlockingQueue.h
 *   Utilities.h, Utilities.cpp
 */
+
 #include "../Sockets/Sockets.h"
 #include "../Logger/Logger.h"
 #include "../Utilities/Utilities.h"
@@ -42,7 +45,7 @@ using Message = std::string;
 using Show = StaticLogger<1>;
 using namespace Utilities;
 using namespace FileSystem;
-
+using namespace std;
 
 
 #pragma region FileTransferFunctions
@@ -144,33 +147,37 @@ void ClientHandler::operator()(Socket& socket_)
 		
 		std::string command = httpMessage.findValue("Command");
 
-		if (command == "GetFiles")
-		{
-			GetFiles(socket_, httpMessage);
-		}
-		else if (command == "Check-In")
-		{
-			CheckIn(socket_, httpMessage);
-		}
-		else if (command == "Check-Out")
-		{
-			CheckOut(socket_, httpMessage);
-		}
-		else if (command == "GetOpenCheck-In")
-		{
-			GetOpenCheckIns(socket_, httpMessage);
-		}
-		else if (command == "CloseOpenCheck-In")
-		{
-			CloseOpenCheckIn(socket_, httpMessage);
-		}
-		else if (command == "quit")
-		{
+		checkCommand(command, socket_, httpMessage);
+
+		if (command == "quit")
 			break;
-		}
 		
 		//enque in recvQ
 		recvQ.enQ(httpMessage);
+	}
+}
+
+void ClientHandler::checkCommand(string command, Socket& socket_, HttpMessage httpMessage)
+{
+	if (command == "GetFiles")
+	{
+		GetFiles(socket_, httpMessage);
+	}
+	else if (command == "Check-In")
+	{
+		CheckIn(socket_, httpMessage);
+	}
+	else if (command == "Check-Out")
+	{
+		CheckOut(socket_, httpMessage);
+	}
+	else if (command == "GetOpenCheck-In")
+	{
+		GetOpenCheckIns(socket_, httpMessage);
+	}
+	else if (command == "CloseOpenCheck-In")
+	{
+		CloseOpenCheckIn(socket_, httpMessage);
 	}
 }
 
@@ -355,14 +362,6 @@ void SenderHandler::GetOpenCheckIns(SocketConnecter& si, HttpMessage httpMessage
 //----------Command: CloseOpenCheckIn------------------//
 void SenderHandler::CloseOpenCheckIn(SocketConnecter& si, HttpMessage httpMessage)
 {
-	//mock - close of open check-In
-	Package closeCheckInPackage;
-	closeCheckInPackage.name = "Package4";
-	closeCheckInPackage.version = "2";
-
-	XMLResponseBodyGenerator xmlResponseBodyGenerator;
-	httpMessage.setBody(xmlResponseBodyGenerator.getRequestBodyForCloseCheckIn(closeCheckInPackage));
-
 	std::cout << "\nSending Message to Server:-\n";
 	httpMessage.printMessage();
 
@@ -385,10 +384,8 @@ void SenderHandler::CheckOut(SocketConnecter& si, HttpMessage httpMessage)
 //
 //
 
-void Client::startClient()
-{
-	try
-	{
+void Client::startClient(){
+	try{	
 		//---------sendQ for communication --------------------//		
 		BlockingQueue<HttpMessage> sendQ;
 
@@ -402,21 +399,17 @@ void Client::startClient()
 
 		//-------------Connect to server-----//
 		SocketConnecter si;
-		while (!si.connect("localhost", 8080))
-		{
+		while (!si.connect("localhost", 8080)){		
 			std::cout << "\n client waiting to connect\n";
 			::Sleep(100);
 		}
-
 		//-------start send thread ---------//
 		SenderHandler sender;
 		std::thread sendThread(sender, std::ref(sendQ), std::ref(si));
 		sendThread.detach();
 
 		//------Main thread: places request/response to send queue---//
-		while (true)
-		{			
-
+		while (true){
 			HttpMessage httpMessage = channelSendQ.deQ();
 
 			//----Add hearders for command,fromAddr, ToAddr----------------------//
@@ -426,24 +419,17 @@ void Client::startClient()
 			Attribute ToAddrAttrib;
 			ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
 			httpMessage.addAttribute(ToAddrAttrib);
-
 			//place message to send on the sendQ
 			sendQ.enQ(httpMessage);
-
 			//wait for response
 			HttpMessage response = cp.RecvQ().deQ();
-
 			channelRecvQ.enQ(response);
-
 		}
-
 		si.shutDownSend(); //quit command sent as input
 	}
-	catch (std::exception& exc)
-	{
-		Show::write("\n  Exeception caught: ");
-		std::string exMsg = "\n  " + std::string(exc.what()) + "\n\n";
-		Show::write(exMsg);
+	catch (std::exception& exc){	
+		cout << "\n  Exeception caught: ";
+		cout << "\n  " << std::string(exc.what()) << "\n\n";
 	}
 }
 

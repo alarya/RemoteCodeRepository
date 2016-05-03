@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// HttpMessage.h - Defines and HTTP like Message class for communication   //
+// HttpMessage.cpp - Defines and HTTP like Message class for communication   //
 // ver 1.0                                                                 //
 // ----------------------------------------------------------------------- //
 // Language:    Visual C++, Visual Studio Enterprise 2015                  //

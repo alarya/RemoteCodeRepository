@@ -22,6 +22,27 @@
 * Public Interface:
 * =================
 *
+* Repository repo;                                          //instantiates an instance of the repository
+* 
+* vector<Package> Packages = repo.getPackageList();         //returns all the packages in the server
+* 
+* Package checkInPackage;
+* checkInPackage.name = "Package10";
+* vector<Packages> dependencies;
+* Package dep1;
+* dep1.name = "Package4" ; dep1.version = "3";
+* dependencies.push_back(dep1);
+* string status = repo.checkInPackage(checkInPackage, dependencies);     //checks in a new package with specified dependencies, and returns the status
+*
+* vector<Package> openPackages = repo.getOpenCheckIns();                 //returns a list of only open packages
+*
+* Pacakge closePackage;
+* closePackage.name = "Package10"; closePackage.version = "1" ;
+* string status = repo.closeOpenCheckIn(closePackage);                  // marks the status of the specified packages as "closed"
+* 
+* vector<Package> checkoutList = repo.checkOutPackageDependencies(package,true);  //returns a list of packages needed to check-out the specified package
+*																				    2nd param determines of dependencies should be added as well
+*																					
 *
 * Required Files:
 * ===============

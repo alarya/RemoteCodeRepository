@@ -214,7 +214,7 @@ namespace ClientGUI {
 			this->tabPage1->Padding = System::Windows::Forms::Padding(3);
 			this->tabPage1->Size = System::Drawing::Size(670, 400);
 			this->tabPage1->TabIndex = 0;
-			this->tabPage1->Text = L"tabPage1";
+			this->tabPage1->Text = L"Check-In";
 			this->tabPage1->UseVisualStyleBackColor = true;
 			// 
 			// panel1
@@ -384,7 +384,7 @@ namespace ClientGUI {
 			this->tabPage2->Padding = System::Windows::Forms::Padding(3);
 			this->tabPage2->Size = System::Drawing::Size(670, 400);
 			this->tabPage2->TabIndex = 1;
-			this->tabPage2->Text = L"tabPage2";
+			this->tabPage2->Text = L"Close Check-In";
 			this->tabPage2->UseVisualStyleBackColor = true;
 			// 
 			// panel2
@@ -472,7 +472,7 @@ namespace ClientGUI {
 			this->tabPage3->Padding = System::Windows::Forms::Padding(3);
 			this->tabPage3->Size = System::Drawing::Size(670, 400);
 			this->tabPage3->TabIndex = 2;
-			this->tabPage3->Text = L"tabPage3";
+			this->tabPage3->Text = L"Check-Out";
 			this->tabPage3->UseVisualStyleBackColor = true;
 			// 
 			// label13
@@ -671,6 +671,7 @@ namespace ClientGUI {
 		//currently blocking on the response
 		HttpMessage response = pReceiver->getMessage();
 		label3->Text = gcnew String(response.getBody().c_str());
+		textBox1->Text = ""; textBox2->Text = ""; textBox3->Text = "";
 	}
 
 	private: System::Void tabControl1_SelectedIndexChanged(System::Object^ sender, System::EventArgs^ e)

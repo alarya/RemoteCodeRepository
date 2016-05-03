@@ -224,19 +224,21 @@ void ClientHandler::CheckOut(Socket& si, HttpMessage httpMessage)
 	vector<Package> dependencies = xml.parseRequestBodyForDependenciesInCheckOut(httpMessage.getBody());
 
 	//receive Check-Out Package
-	string checkOutPackageCppFile = checkOutPackage.name + ".cpp";
-	string checkOutPackageHFile = checkOutPackage.name + ".h";
+	string checkOutPackageCppFile = checkOutPackage.name + "_" + checkOutPackage.version+  ".cpp" ;
+	string checkOutPackageHFile = checkOutPackage.name + "_" + checkOutPackage.version + ".h" ;
 	size_t checkOutPackageCppLength = Converter<size_t>::toValue(httpMessage.findValue(checkOutPackage.name + "_" + checkOutPackage.version + "_cpp_Length"));
 	size_t checkOutPackageHLength = Converter<size_t>::toValue(httpMessage.findValue(checkOutPackage.name + "_" + checkOutPackage.version + "_h_Length"));
 
+	
 	receiveFile(checkOutPackageCppFile, checkOutPackageCppLength, si);
 	receiveFile(checkOutPackageHFile, checkOutPackageHLength, si);
 	cout << "\n Package: " << checkOutPackage.name + "_" + checkOutPackage.version << " received \n";
+
 	//receive Dependencies if any
 	for (auto dep : dependencies)
 	{
-		string depPackageCppFile = dep.name + ".cpp";
-		string depPackageHFile = dep.name + ".h";
+		string depPackageCppFile = dep.name + "_" + dep.version + ".cpp";
+		string depPackageHFile = dep.name + "_" + dep.version + ".h";
 		size_t depPackageCppLength = Converter<size_t>::toValue(httpMessage.findValue(dep.name + "_" + dep.version + "_cpp_Length"));
 		size_t depPackageHLength = Converter<size_t>::toValue(httpMessage.findValue(dep.name + "_" + dep.version + "_h_Length"));
 
@@ -245,7 +247,7 @@ void ClientHandler::CheckOut(Socket& si, HttpMessage httpMessage)
 
 		cout << "\n Package: " << dep.name + "_" + dep.version << " received \n";
 	}
-
+	cout << "\n\t Download Folder: " << Path::getFullFileSpec("../clientFolder/downloads");
 }
 
 #pragma endregion
@@ -305,13 +307,7 @@ void SenderHandler::operator()(BlockingQueue<HttpMessage>& sendQ,SocketConnecter
 void SenderHandler::GetFiles(SocketConnecter& si, HttpMessage httpMessage)
 {
 	std::cout << "\nSending Message to Server:-\n";
-	std::cout << "Command: " << httpMessage.findValue("Command") << "\n";
-	std::cout << "ToAddr: " << httpMessage.findValue("ToAddr") << "\n";
-	std::cout << "FromAddr: " << httpMessage.findValue("FromAddr") << "\n";
-	std::string body;
-	for (auto c : httpMessage.body())
-		body += c;
-	std::cout << "Body: " << body << "\n";
+	httpMessage.printMessage();
 	
 	si.sendString(httpMessage.buildMessage());
 }
@@ -446,7 +442,136 @@ HttpMessage Client::doOperation(HttpMessage message)
 #ifdef TEST_CLIENT
 
 
+//-------------defining a test suite---------------------------//
+
+void runGetFiles(BlockingQueue<HttpMessage>& sendQ, HttpMessage httpMessage)
+{
+	cout << "\n----------TEST:Get all packages on the server-------------------------\n";
+
+	Attribute commandAttrib;
+	commandAttrib.first = "Command"; commandAttrib.second = "GetFiles";
+	httpMessage.addAttribute(commandAttrib);
+
+	sendQ.enQ(httpMessage);
+}
+
+void runGetOpenCheckIn(BlockingQueue<HttpMessage>& sendQ, HttpMessage httpMessage)
+{
+	cout << "\n----------TEST:Get all packages on the server currently open-----------\n";
+
+	Attribute commandAttrib;
+	commandAttrib.first = "Command"; commandAttrib.second = "GetOpenCheck-In";
+	httpMessage.addAttribute(commandAttrib);
+
+	sendQ.enQ(httpMessage);
+}
+
+void runCheckInPackage(BlockingQueue<HttpMessage>& sendQ, HttpMessage httpMessage)
+{
+	cout << "\n----------TEST:Get all packages on the server currently open-----------\n";
+
+	Attribute commandAttrib;
+	commandAttrib.first = "Command"; commandAttrib.second = "Check-In";
+	httpMessage.addAttribute(commandAttrib);
+
+	cout << "\nChecking in package: Package5 from ClientFolder \n";
+	Attribute cppFilePath;
+	cppFilePath.first = "cppFilePath"; cppFilePath.second = "../ClientFolder/Upload/Package5.cpp";
+	httpMessage.addAttribute(cppFilePath);
+	Attribute hFilePath;
+	hFilePath.first = "hFilePath"; hFilePath.second = "../ClientFolder/Upload/Package5.h";
+	httpMessage.addAttribute(hFilePath);
+    
+	Package checkInPackage;
+	checkInPackage.name = "Package5";
+	vector<Package> dependencies;
+	Package dep1;
+	dep1.name = "Package3"; dep1.version = "1";
+	dependencies.push_back(dep1);
+	Package dep2;
+	dep2.name = "Package4"; dep2.version = "1";
+	dependencies.push_back(dep2);
+	XMLResponseBodyGenerator xml;
+	httpMessage.setBody(xml.getRequestBodyForCheckIn(checkInPackage, dependencies));
+
+	sendQ.enQ(httpMessage);
+}
+
+void runCloseOpenPackage(BlockingQueue<HttpMessage>& sendQ, HttpMessage httpMessage)
+{
+	cout << "\n----------TEST:Close an open Package(Package5)----------------------------------\n";
+
+	Attribute commandAttrib;
+	commandAttrib.first = "Command"; commandAttrib.second = "CloseOpenCheck-In";
+	httpMessage.addAttribute(commandAttrib);
+
+	Package closeOpenCheckInPackage;
+	closeOpenCheckInPackage.name = "Package5"; closeOpenCheckInPackage.version = "1";
+	XMLResponseBodyGenerator xml;
+	httpMessage.setBody(xml.getRequestBodyForCloseCheckIn(closeOpenCheckInPackage));
+
+	sendQ.enQ(httpMessage);
+}
+
+void runCheckOutPackage(BlockingQueue<HttpMessage>& sendQ, HttpMessage httpMessage)
+{
+	cout << "\n----------TEST:CheckOut a Package----------------------------------\n";
+
+	Attribute commandAttrib;
+	commandAttrib.first = "Command"; commandAttrib.second = "Check-Out";
+	httpMessage.addAttribute(commandAttrib);
+
+	Attribute includeDependencies;
+	includeDependencies.first = "includeDependencies"; includeDependencies.second = "true";
+	httpMessage.addAttribute(includeDependencies);
+
+	Package checkOutPackage;
+	checkOutPackage.name = "Package1"; checkOutPackage.version = "1";
+	vector<Package> dependencies;
+	XMLResponseBodyGenerator xml;
+	httpMessage.setBody(xml.getRequestBodyforCheckOut(checkOutPackage, dependencies));
+
+	sendQ.enQ(httpMessage);
+}
+
+void runTest(int testNo, BlockingQueue<HttpMessage>& sendQ)
+{
+	HttpMessage httpMessage;
+	Attribute fromAddrAttrib;
+	fromAddrAttrib.first = "FromAddr"; fromAddrAttrib.second = "127.0.0.1:8081";
+	httpMessage.addAttribute(fromAddrAttrib);
+	Attribute ToAddrAttrib;
+	ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
+	httpMessage.addAttribute(ToAddrAttrib);
+
+	if (testNo == 1)
+	{
+		runGetFiles(sendQ, httpMessage);
+	}
+	else if (testNo == 2)
+	{
+		runCheckInPackage(sendQ, httpMessage);
+	}
+	else if (testNo == 3)
+	{
+		runGetOpenCheckIn(sendQ, httpMessage);
+	}
+	else if (testNo == 4)
+	{
+		runCloseOpenPackage(sendQ, httpMessage);
+	}
+	else if (testNo == 5)
+	{
+		runGetOpenCheckIn(sendQ, httpMessage);
+	}
+	else if (testNo == 6)
+	{
+		runCheckOutPackage(sendQ, httpMessage);
+	}
+}
+
 //--------------Client main thread-----------------------------//
+
 int main()
 {
 	try
@@ -475,36 +600,45 @@ int main()
 		std::thread sendThread(sender, std::ref(sendQ), std::ref(si));
 		sendThread.detach();
 
+		int testNo = 1;
 		//------Main thread: places request/response to send queue---//
 		while (true)
 		{
-			HttpMessage httpMessage;
-			std::string command;
-			std::cout << "\nEnter a command: ";
-			std::getline(std::cin, command);
+			//HttpMessage httpMessage;
+			//std::string command;
+			//std::cout << "\nEnter a command: ";
+			//std::getline(std::cin, command);
 
-			//don't send anymore commands: quit
-			if (command == "quit")
-			{
-				break;
-			}
+			////don't send anymore commands: quit
+			//if (command == "quit")
+			//{
+			//	break;
+			//}
 
-			//----Add hearders for command,fromAddr, ToAddr----------------------//
-			Attribute commandAttrib;
-			commandAttrib.first = "Command"; commandAttrib.second = command;
-			httpMessage.addAttribute(commandAttrib);
-			Attribute fromAddrAttrib;
-			fromAddrAttrib.first = "FromAddr"; fromAddrAttrib.second = "127.0.0.1:8081";
-			httpMessage.addAttribute(fromAddrAttrib);
-			Attribute ToAddrAttrib;
-			ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
-			httpMessage.addAttribute(ToAddrAttrib);
+			////----Add hearders for command,fromAddr, ToAddr----------------------//
+			//Attribute commandAttrib;
+			//commandAttrib.first = "Command"; commandAttrib.second = command;
+			//httpMessage.addAttribute(commandAttrib);
+			//Attribute fromAddrAttrib;
+			//fromAddrAttrib.first = "FromAddr"; fromAddrAttrib.second = "127.0.0.1:8081";
+			//httpMessage.addAttribute(fromAddrAttrib);
+			//Attribute ToAddrAttrib;
+			//ToAddrAttrib.first = "ToAddr"; ToAddrAttrib.second = "127.0.0.1:8080";
+			//httpMessage.addAttribute(ToAddrAttrib);
 
-			//place message to send on the sendQ
-			sendQ.enQ(httpMessage);
+			////place message to send on the sendQ
+			//sendQ.enQ(httpMessage);
+
+			runTest(testNo, sendQ);
 
 			//wait for response
 			HttpMessage response = cp.RecvQ().deQ();
+
+			if (testNo == 6)
+				break;
+
+			testNo++;			
+
 		}
 		si.shutDownSend(); //quit command sent as input
 	}

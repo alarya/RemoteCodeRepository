@@ -176,26 +176,48 @@ PackageList Repository::getOpenCheckIns()
 
 #pragma region Check-OutPackage
 
-//----------returns a list of file path needed to be check-Out a package----------//
+bool packageExists_(PackageList& packagesAdded, Package package)
+{
+	for (auto package_ : packagesAdded)
+	{
+		if (package_.name == package.name && package_.version == package.version)
+			return true;
+
+	}
+	return false;
+}
+
+void addDependencies(Package checkOutPackage,Package depPackage, dependencyList* packagesAndDependencies,PackageList& packagesAdded)
+{
+	for (auto package_ : (*packagesAndDependencies)[depPackage])
+	{
+		if (!packageExists_(packagesAdded, package_) && !(checkOutPackage.name == package_.name && checkOutPackage.version == package_.version))
+		{
+			packagesAdded.push_back(package_);
+			addDependencies(checkOutPackage, package_, packagesAndDependencies, packagesAdded);
+		}
+	}
+}
+
+
+//----------returns a list of packages needed to be check-Out a package----------//
 PackageList Repository::checkOutPackageDependencies(Package package, bool includeDependencies)
 {
-	PackageList packages;
-	FileMgr fileMgr;
+	PackageList packagesAdded;
 
 	if (includeDependencies)
 	{
-		//there might be a case where circular dependencies exist so use a unordered set of to check if it was added already
-		/*TO-DO: include entire dependency graph, currently only adding directly dependent packages*/
-		/*unordered_set<Package> found;
-		vector<Package> dependencies;*/
-
 		for (auto package_ : (*packagesAndDependencies)[package])
 		{
-			packages.push_back(package_);
+			if (! packageExists_(packagesAdded, package_) && !(package.name == package_.name && package.version == package_.version))
+			{			
+				packagesAdded.push_back(package_);
+				addDependencies(package, package_, packagesAndDependencies, packagesAdded);
+			}
 		}
 	}
 
-	return packages;
+	return packagesAdded;
 }
 
 #pragma endregion
@@ -298,8 +320,8 @@ int main()
 	repo.checkInPackage(newPackage, dependencies);*/	
 
 	//--------test checking-Out package function------------//
-	/*Package checkOutPackage; checkOutPackage.name = "Package1"; checkOutPackage.version = "2";
-	vector<string> checkoutFiles = repo.checkOutPackage(checkOutPackage, true);*/
+	Package checkOutPackage; checkOutPackage.name = "Package1"; checkOutPackage.version = "1";
+	PackageList checkoutFiles = repo.checkOutPackageDependencies(checkOutPackage, true);
 
 	//-------test closing an existing open check-In---------//
 	//Package closeCheckIn; closeCheckIn.name = "Package4"; closeCheckIn.version = "2";

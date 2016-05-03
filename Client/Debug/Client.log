@@ -1,16 +1,2 @@
 ﻿  Client.cpp
-  XMLResponseBodyGenerator.cpp
-  XmlParser.cpp
-  XmlElement.cpp
-  xmlElementParts.cpp
-  Tokenizer.cpp
-  XmlDocument.cpp
-  Utilities.cpp
-  Sockets.cpp
-  MetadataMgr.cpp
-  Logger.cpp
-  Cpp11-BlockingQueue.cpp
-  HttpMessage.cpp
-  FileSystem.cpp
-  Generating Code...
   Client.vcxproj -> E:\Syracuse(Spring2016)\OOD\Project4\Project4\Debug\Client.exe
